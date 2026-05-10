@@ -1,9 +1,8 @@
 /**
- * writing.html — Topic (GET /api/generate-topic), Word Counter, Analyze → POST /api/check-writing
+ * writing.html — Topic: questions.js dan tasodifiy; Analyze: POST /api/check-writing (Groq).
  */
 (function () {
   const API_ANALYZE = "/api/check-writing";
-  const API_TOPIC = "/api/generate-topic";
   const MIN_LENGTH = 20;
 
   function countWords(text) {
@@ -43,6 +42,22 @@
       report: "Task 1 report",
     };
     return m[type] || type;
+  }
+
+  /**
+   * @param {string[]} list
+   * @param {string} [avoid]
+   */
+  function pickRandom(list, avoid) {
+    if (!list || list.length === 0) return "";
+    if (list.length === 1) return list[0];
+    var pick = list[Math.floor(Math.random() * list.length)];
+    var tries = 0;
+    while (pick === avoid && tries < 20) {
+      pick = list[Math.floor(Math.random() * list.length)];
+      tries++;
+    }
+    return pick;
   }
 
   function initWritingPage() {
@@ -101,69 +116,50 @@
       });
     }
 
-    function topicUrl() {
-      return API_TOPIC + "?task=" + encodeURIComponent(selectedTask);
-    }
-
     function loadTopic() {
-      currentTopic = "";
       if (topicError) {
         topicError.classList.add("hidden");
         topicError.textContent = "";
       }
-      if (topicLoading) topicLoading.classList.remove("hidden");
-      if (topicContent) topicContent.classList.add("hidden");
-      if (refreshTopicBtn) refreshTopicBtn.disabled = true;
+      if (topicLoading) topicLoading.classList.add("hidden");
 
-      fetch(topicUrl(), { method: "GET", headers: { Accept: "application/json" } })
-        .then(function (res) {
-          return res.json().then(function (payload) {
-            if (!res.ok) {
-              const message =
-                (payload && payload.error) ||
-                (res.status === 404
-                  ? "Mavzu API topilmadi (Vercelda oching)."
-                  : "Mavzu olinmadi: " + res.status);
-              throw new Error(message);
-            }
-            return payload;
-          });
-        })
-        .then(function (data) {
-          currentTopic = typeof data.prompt === "string" ? data.prompt.trim() : "";
-          if (topicText) topicText.textContent = currentTopic || "—";
-          if (topicBadges) {
-            topicBadges.innerHTML = "";
-            const typeBadge = document.createElement("span");
-            typeBadge.className =
-              "rounded-lg border border-fuchsia-400/35 bg-fuchsia-500/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-fuchsia-100";
-            typeBadge.textContent = taskTypeLabel(data.taskType);
-            topicBadges.appendChild(typeBadge);
-            const lvl = document.createElement("span");
-            lvl.className =
-              "rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-cyan-100";
-            lvl.textContent = "CEFR " + (data.cefrLevel || "");
-            topicBadges.appendChild(lvl);
-          }
-          if (topicLoading) topicLoading.classList.add("hidden");
-          if (topicContent) topicContent.classList.remove("hidden");
-        })
-        .catch(function (err) {
-          if (topicLoading) topicLoading.classList.add("hidden");
-          if (topicContent) topicContent.classList.add("hidden");
-          if (topicError) {
-            topicError.textContent = err && err.message ? err.message : "Mavzu yuklanmadi.";
-            topicError.classList.remove("hidden");
-          }
-        })
-        .finally(function () {
-          if (refreshTopicBtn) refreshTopicBtn.disabled = false;
-        });
+      const bank =
+        typeof window !== "undefined" && window.LIVA_WRITING_QUESTIONS
+          ? window.LIVA_WRITING_QUESTIONS
+          : null;
+      const list = bank && bank[selectedTask] ? bank[selectedTask] : null;
+
+      if (!list || list.length === 0) {
+        currentTopic = "";
+        if (topicContent) topicContent.classList.add("hidden");
+        if (topicError) {
+          topicError.textContent =
+            "Savollar topilmadi — questions.js yuklanganini tekshiring (LIVA_WRITING_QUESTIONS).";
+          topicError.classList.remove("hidden");
+        }
+        return;
+      }
+
+      currentTopic = pickRandom(list, currentTopic);
+      if (topicText) topicText.textContent = currentTopic;
+      if (topicBadges) {
+        topicBadges.innerHTML = "";
+        const typeBadge = document.createElement("span");
+        typeBadge.className =
+          "rounded-lg border border-fuchsia-400/35 bg-fuchsia-500/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-fuchsia-100";
+        typeBadge.textContent = taskTypeLabel(selectedTask);
+        topicBadges.appendChild(typeBadge);
+        const srcBadge = document.createElement("span");
+        srcBadge.className =
+          "rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-cyan-100";
+        srcBadge.textContent = "Lokal bank";
+        topicBadges.appendChild(srcBadge);
+      }
+      if (topicContent) topicContent.classList.remove("hidden");
     }
 
     function onTabClick(mode) {
       if (mode !== "task11" && mode !== "task12" && mode !== "part2") return;
-      if (selectedTask === mode) return;
       selectedTask = mode;
       setActiveTaskTab(mode);
       loadTopic();
