@@ -45,15 +45,57 @@
   }
 
   /**
-   * @param {string[]} list
-   * @param {string} [avoid]
+   * @param {string | { context?: string, prompt?: string }} item
+   * @param {Record<string, unknown>} bank
+   * @param {string} taskKey
+   * @returns {{ fullText: string, showContext: boolean, contextText: string, promptText: string }}
    */
-  function pickRandom(list, avoid) {
-    if (!list || list.length === 0) return "";
+  function buildTopicPayload(item, bank, taskKey) {
+    if (typeof item === "string") {
+      return {
+        fullText: item,
+        showContext: false,
+        contextText: "",
+        promptText: item,
+      };
+    }
+    var prompt = typeof item.prompt === "string" ? item.prompt : "";
+    var ctx =
+      typeof item.context === "string"
+        ? item.context
+        : typeof bank.canteenContext === "string"
+          ? bank.canteenContext
+          : "";
+    if ((taskKey === "task11" || taskKey === "task12") && ctx) {
+      return {
+        fullText: "Context:\n\n" + ctx + "\n\n---\n\n" + prompt,
+        showContext: true,
+        contextText: ctx,
+        promptText: prompt,
+      };
+    }
+    return {
+      fullText: prompt,
+      showContext: false,
+      contextText: "",
+      promptText: prompt,
+    };
+  }
+
+  /**
+   * @param {unknown[]} list
+   * @param {Record<string, unknown>} bank
+   * @param {string} taskKey
+   * @param {string} [avoidFullText]
+   */
+  function pickRandomItem(list, bank, taskKey, avoidFullText) {
+    if (!list || list.length === 0) return null;
     if (list.length === 1) return list[0];
     var pick = list[Math.floor(Math.random() * list.length)];
     var tries = 0;
-    while (pick === avoid && tries < 20) {
+    while (tries < 25) {
+      var full = buildTopicPayload(pick, bank, taskKey).fullText;
+      if (!avoidFullText || full !== avoidFullText || tries > 15) break;
       pick = list[Math.floor(Math.random() * list.length)];
       tries++;
     }
@@ -75,6 +117,8 @@
     const topicContent = document.getElementById("topic-content");
     const topicBadges = document.getElementById("topic-badges");
     const topicText = document.getElementById("topic-text");
+    const topicContextWrap = document.getElementById("topic-context-wrap");
+    const topicContextEl = document.getElementById("topic-context");
     const topicError = document.getElementById("topic-error");
     const refreshTopicBtn = document.getElementById("refresh-topic-btn");
     const tabTask11 = document.getElementById("tab-task11");
@@ -132,6 +176,7 @@
       if (!list || list.length === 0) {
         currentTopic = "";
         if (topicContent) topicContent.classList.add("hidden");
+        if (topicContextWrap) topicContextWrap.classList.add("hidden");
         if (topicError) {
           topicError.textContent =
             "Savollar topilmadi — questions.js yuklanganini tekshiring (LIVA_WRITING_QUESTIONS).";
@@ -140,8 +185,22 @@
         return;
       }
 
-      currentTopic = pickRandom(list, currentTopic);
-      if (topicText) topicText.textContent = currentTopic;
+      var picked = pickRandomItem(list, bank, selectedTask, currentTopic);
+      if (picked == null) {
+        currentTopic = "";
+        return;
+      }
+      var payload = buildTopicPayload(picked, bank, selectedTask);
+      currentTopic = payload.fullText;
+      if (topicContextEl) topicContextEl.textContent = payload.contextText;
+      if (topicContextWrap) {
+        if (payload.showContext && payload.contextText) {
+          topicContextWrap.classList.remove("hidden");
+        } else {
+          topicContextWrap.classList.add("hidden");
+        }
+      }
+      if (topicText) topicText.textContent = payload.promptText;
       if (topicBadges) {
         topicBadges.innerHTML = "";
         const typeBadge = document.createElement("span");
