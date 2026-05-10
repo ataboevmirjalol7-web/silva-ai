@@ -34,6 +34,9 @@
 
   function taskTypeLabel(type) {
     const m = {
+      task11: "Task 1.1",
+      task12: "Task 1.2",
+      part2: "Part 2",
       email: "Email",
       letter: "Letter",
       essay: "Essay",
@@ -49,6 +52,8 @@
 
     /** @type {string} */
     let currentTopic = "";
+    /** @type {'task11' | 'task12' | 'part2'} */
+    let selectedTask = "task11";
 
     const wordCountEl = document.getElementById("word-count");
     const topicLoading = document.getElementById("topic-loading");
@@ -57,6 +62,9 @@
     const topicText = document.getElementById("topic-text");
     const topicError = document.getElementById("topic-error");
     const refreshTopicBtn = document.getElementById("refresh-topic-btn");
+    const tabTask11 = document.getElementById("tab-task11");
+    const tabTask12 = document.getElementById("tab-task12");
+    const tabPart2 = document.getElementById("tab-part2");
 
     const emptyState = document.getElementById("empty-state");
     const loadingOverlay = document.getElementById("loading-overlay");
@@ -83,6 +91,20 @@
     updateWordCount();
     essay.addEventListener("input", updateWordCount);
 
+    function setActiveTaskTab(mode) {
+      const tabs = [tabTask11, tabTask12, tabPart2].filter(Boolean);
+      tabs.forEach(function (btn) {
+        if (!btn) return;
+        const isSel = btn.getAttribute("data-task") === mode;
+        btn.classList.toggle("task-tab-active", isSel);
+        btn.setAttribute("aria-selected", isSel ? "true" : "false");
+      });
+    }
+
+    function topicUrl() {
+      return API_TOPIC + "?task=" + encodeURIComponent(selectedTask);
+    }
+
     function loadTopic() {
       currentTopic = "";
       if (topicError) {
@@ -93,7 +115,7 @@
       if (topicContent) topicContent.classList.add("hidden");
       if (refreshTopicBtn) refreshTopicBtn.disabled = true;
 
-      fetch(API_TOPIC, { method: "GET", headers: { Accept: "application/json" } })
+      fetch(topicUrl(), { method: "GET", headers: { Accept: "application/json" } })
         .then(function (res) {
           return res.json().then(function (payload) {
             if (!res.ok) {
@@ -139,6 +161,19 @@
         });
     }
 
+    function onTabClick(mode) {
+      if (mode !== "task11" && mode !== "task12" && mode !== "part2") return;
+      if (selectedTask === mode) return;
+      selectedTask = mode;
+      setActiveTaskTab(mode);
+      loadTopic();
+    }
+
+    if (tabTask11) tabTask11.addEventListener("click", function () { onTabClick("task11"); });
+    if (tabTask12) tabTask12.addEventListener("click", function () { onTabClick("task12"); });
+    if (tabPart2) tabPart2.addEventListener("click", function () { onTabClick("part2"); });
+
+    setActiveTaskTab("task11");
     loadTopic();
     if (refreshTopicBtn) {
       refreshTopicBtn.addEventListener("click", loadTopic);

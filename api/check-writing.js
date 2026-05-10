@@ -1,5 +1,5 @@
 /**
- * Vercel Serverless: IELTS Writing tahlili — Groq API (llama3-70b-8192).
+ * Vercel Serverless: IELTS Writing tahlili — Groq API (llama-3.1-70b-versatile).
  * Environment: GROQ_API_KEY
  *
  * POST /api/check-writing
@@ -8,7 +8,7 @@
  */
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama3-70b-8192";
+const MODEL = "llama-3.1-70b-versatile";
 const MIN_LENGTH = 20;
 const MAX_LENGTH = 12000;
 

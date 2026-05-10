@@ -108,6 +108,31 @@
       #loading-overlay.is-hidden {
         display: none;
       }
+      .task-tab {
+        border-radius: 0.75rem;
+        border-width: 1px;
+        padding: 0.65rem 1.15rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        transition: background 0.2s, color 0.2s, box-shadow 0.2s, border-color 0.2s;
+        border-color: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(233, 212, 255, 0.65);
+      }
+      .task-tab:hover {
+        background: rgba(255, 255, 255, 0.09);
+        color: rgba(255, 255, 255, 0.95);
+      }
+      .task-tab:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(232, 121, 249, 0.45);
+      }
+      .task-tab-active {
+        border-color: rgba(232, 121, 249, 0.55) !important;
+        background: rgba(168, 85, 247, 0.22) !important;
+        color: #fff !important;
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.35);
+      }
     </style>
   </head>
   <body class="mesh-bg min-h-screen antialiased text-white selection:bg-fuchsia-500/35 selection:text-white">
@@ -158,6 +183,23 @@
           >
         </nav>
       </header>
+
+      <!-- Task tanlash -->
+      <div
+        class="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.05] p-2 backdrop-blur-xl sm:gap-3 sm:p-2.5"
+        role="tablist"
+        aria-label="Writing topshirig‘i"
+      >
+        <button type="button" class="task-tab task-tab-active" data-task="task11" id="tab-task11" role="tab" aria-selected="true">
+          Task 1.1
+        </button>
+        <button type="button" class="task-tab" data-task="task12" id="tab-task12" role="tab" aria-selected="false">
+          Task 1.2
+        </button>
+        <button type="button" class="task-tab" data-task="part2" id="tab-part2" role="tab" aria-selected="false">
+          Part 2
+        </button>
+      </div>
 
       <!-- Ikki ustun -->
       <div class="grid gap-6 lg:grid-cols-2 lg:gap-10 lg:items-start">

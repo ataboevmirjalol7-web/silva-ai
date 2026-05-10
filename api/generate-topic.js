@@ -1,30 +1,50 @@
 /**
- * Vercel Serverless: tasodifiy IELTS/CEFR Writing mavzusi — Groq (llama3-70b-8192).
- * GET /api/generate-topic
+ * Vercel Serverless: Writing topshirig‘i — Groq (llama-3.1-70b-versatile).
+ * GET /api/generate-topic?task=task11|task12|part2  (default: task11)
  * Environment: GROQ_API_KEY
  */
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama3-70b-8192";
+const MODEL = "llama-3.1-70b-versatile";
 
-const SYSTEM_PROMPT = `You create random English practice prompts for IELTS-style Writing (and linked CEFR levels).
+const JSON_RULE = `Reply with ONLY valid JSON (no markdown fences, no extra text):
+{"taskType":"task11"|"task12"|"part2","cefrLevel":"B2","prompt":"..."}
+The taskType in JSON MUST exactly match the requested mode. cefrLevel: one of B1, B2, C1.`;
 
-Each time you are called, pick **randomly** ONE format:
-- **email** — IELTS General Training style: semi-formal/formal email (~150 words), situation + bullet points
-- **letter** — GT letter (complaint, request, apology, etc.) (~150 words)
-- **essay** — IELTS Task 2 style discursive/ opinion essay (~250 words), with a clear question
-- **report** — IELTS Academic Task 1 style: describe one visual (bar chart, line graph, process, or map) briefly in instructions
+/**
+ * @param {string} mode
+ */
+function buildGroqMessages(mode) {
+  if (mode === "task11") {
+    return {
+      system: `You create IELTS General Training Writing Task 1 practice: a short **email** scenario.
 
-Also pick a random **CEFR target** for difficulty wording: one of A2, B1, B2, C1, C2 (lean toward B2–C1 for IELTS).
+${JSON_RULE}
 
-Reply with **only** valid JSON (no markdown, no commentary):
-{
-  "taskType": "email|letter|essay|report",
-  "cefrLevel": "B2",
-  "prompt": "<full exam-style instructions shown to the candidate, in English>"
+**Task 1.1 rules:** The entire instruction in "prompt" must be **about 50 English words** (40–60 is OK). Style like real GT paper: brief context, you may use 2–3 short bullet points, then what to write. Mention the candidate should write about **150 words** in their email. Random real-life contexts (neighbour, manager, landlord, club organiser, etc.).`,
+      user: `Generate ONE new Task 1.1 email question as JSON. Vary the situation completely. Hint: ${Date.now()}`,
+    };
+  }
+  if (mode === "task12") {
+    return {
+      system: `You create IELTS General Training Task 1 style: a **formal email** exam question.
+
+${JSON_RULE}
+
+**Task 1.2 rules:** The instruction text in "prompt" must be **120–150 English words** (count carefully). Formal register; detailed scenario (letters to council, company, complaint, application, etc.); clear bullet points or numbered requirements. State expected length for the candidate (~150 words) if appropriate.`,
+      user: `Generate ONE new Task 1.2 formal email question as JSON. Professional tone. Hint: ${Date.now()}`,
+    };
+  }
+  /* part2 */
+  return {
+    system: `You create IELTS Writing Task 2 or **online forum / discussion** style prompts.
+
+${JSON_RULE}
+
+**Part 2 rules:** The instruction in "prompt" must be **180–200 English words**. Include background, both sides or multiple aspects, and a clear question (e.g. agree/disadvantages, causes and solutions, to what extent). Suitable for a 250-word candidate response.`,
+    user: `Generate ONE new Part 2 essay / online discussion question as JSON. Thought-provoking topic. Hint: ${Date.now()}`,
+  };
 }
-
-The "prompt" must read like real exam paper text (clear scenario + what to write). Vary topics (environment, work, education, technology, health, travel, etc.).`;
 
 /**
  * @param {string} content
@@ -42,16 +62,30 @@ function parseModelJson(content) {
   return JSON.parse(jsonStr.slice(start, end + 1));
 }
 
-function validateTopic(obj) {
-  const allowed = ["email", "letter", "essay", "report"];
+/**
+ * @param {object} obj
+ * @param {string} mode
+ */
+function validateTopic(obj, mode) {
+  const allowed = ["task11", "task12", "part2"];
   if (!obj || typeof obj !== "object") throw new Error("noto‘g‘ri javob");
   if (!allowed.includes(obj.taskType)) throw new Error("taskType noto‘g‘ri");
+  if (obj.taskType !== mode) throw new Error("taskType mos emas");
   if (typeof obj.cefrLevel !== "string" || !obj.cefrLevel.trim()) {
     throw new Error("cefrLevel yetarli emas");
   }
-  if (typeof obj.prompt !== "string" || obj.prompt.trim().length < 40) {
-    throw new Error("prompt yetarli emas");
-  }
+  if (typeof obj.prompt !== "string") throw new Error("prompt yetarli emas");
+  const len = obj.prompt.trim().length;
+  const min = mode === "task11" ? 20 : mode === "task12" ? 80 : 140;
+  if (len < min) throw new Error("prompt yetarli emas");
+}
+
+function parseTaskFromUrl(req) {
+  const raw = req.url || "";
+  const q = raw.includes("?") ? raw.slice(raw.indexOf("?") + 1) : "";
+  const task = new URLSearchParams(q).get("task");
+  if (task === "task11" || task === "task12" || task === "part2") return task;
+  return "task11";
 }
 
 function cors(res, origin) {
@@ -90,10 +124,8 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const userMsg =
-    "Generate ONE new random writing task now. Make it different from any generic example — vary context. Output JSON only." +
-    " Random hint: " +
-    String(Date.now()).slice(-4);
+  const mode = parseTaskFromUrl(req);
+  const { system, user } = buildGroqMessages(mode);
 
   try {
     const groqRes = await fetch(GROQ_URL, {
@@ -104,11 +136,11 @@ module.exports = async function handler(req, res) {
       },
       body: JSON.stringify({
         model: MODEL,
-        temperature: 0.95,
-        max_tokens: 1200,
+        temperature: mode === "part2" ? 0.88 : 0.92,
+        max_tokens: mode === "task11" ? 600 : mode === "task12" ? 900 : 1200,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userMsg },
+          { role: "system", content: system },
+          { role: "user", content: user },
         ],
       }),
     });
@@ -143,7 +175,7 @@ module.exports = async function handler(req, res) {
     let parsed;
     try {
       parsed = parseModelJson(content);
-      validateTopic(parsed);
+      validateTopic(parsed, mode);
     } catch (e) {
       res.statusCode = 502;
       res.setHeader("Content-Type", "application/json; charset=utf-8");
