@@ -160,12 +160,26 @@
       });
     }
 
+    function setTopicLoadingVisible(visible) {
+      if (!topicLoading) return;
+      topicLoading.style.display = visible ? "flex" : "none";
+      topicLoading.setAttribute("aria-hidden", visible ? "false" : "true");
+    }
+
+    function setTopicContentVisible(visible) {
+      if (!topicContent) return;
+      topicContent.style.display = visible ? "block" : "none";
+      topicContent.setAttribute("aria-hidden", visible ? "false" : "true");
+    }
+
     function loadTopic() {
       if (topicError) {
         topicError.classList.add("hidden");
         topicError.textContent = "";
       }
-      if (topicLoading) topicLoading.classList.add("hidden");
+
+      setTopicLoadingVisible(false);
+      setTopicContentVisible(false);
 
       const bank =
         typeof window !== "undefined" && window.LIVA_WRITING_QUESTIONS
@@ -175,7 +189,6 @@
 
       if (!list || list.length === 0) {
         currentTopic = "";
-        if (topicContent) topicContent.classList.add("hidden");
         if (topicContextWrap) topicContextWrap.classList.add("hidden");
         if (topicError) {
           topicError.textContent =
@@ -214,7 +227,9 @@
         srcBadge.textContent = "Lokal bank";
         topicBadges.appendChild(srcBadge);
       }
-      if (topicContent) topicContent.classList.remove("hidden");
+
+      setTopicLoadingVisible(false);
+      setTopicContentVisible(true);
     }
 
     function onTabClick(mode) {

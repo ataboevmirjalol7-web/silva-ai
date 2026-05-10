@@ -226,14 +226,16 @@
             </div>
             <div
               id="topic-loading"
-              class="hidden items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-purple-200/85 sm:flex"
+              class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-purple-200/85"
+              style="display: none"
+              aria-hidden="true"
             >
               <span
                 class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-fuchsia-400/30 border-t-fuchsia-400"
               ></span>
               Mavzu yuklanmoqda...
             </div>
-            <div id="topic-content" class="hidden">
+            <div id="topic-content" style="display: none" aria-hidden="true">
               <div id="topic-badges" class="mb-3 flex flex-wrap gap-2"></div>
               <div id="topic-context-wrap" class="hidden mb-4 rounded-xl border border-fuchsia-500/20 bg-white/[0.04] p-3 sm:p-4">
                 <p class="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300/95">

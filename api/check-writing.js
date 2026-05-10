@@ -1,14 +1,45 @@
 /**
- * Vercel Serverless: IELTS Writing tahlili — Groq API (llama-3.1-70b-versatile).
+ * Vercel Serverless: IELTS Writing tahlili — Groq API.
+ * Modellar: avval llama-3.3-70b-versatile, xato bo‘lsa llama3-70b-8192.
  * Environment: GROQ_API_KEY
  *
  * POST /api/check-writing
  * Body: { "essay": "...", "topic": "..." } — topic ixtiyoriy (generatsiya qilingan topshiriq matni).
- * Response: JSON — har bir kriteriya uchun ball va tahlil.
+ * Response: JSON — har bir kriteriya uchun ball va tahlil (overallBand qo‘shiladi).
  */
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.1-70b-versatile";
+const MODEL_PRIMARY = "llama-3.3-70b-versatile";
+const MODEL_FALLBACK = "llama3-70b-8192";
+
+/**
+ * @param {string} apiKey
+ * @param {string} model
+ * @param {object} payload - model siz (temperature, messages, …)
+ */
+async function groqChat(apiKey, model, payload) {
+  const groqRes = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ ...payload, model }),
+  });
+  const rawText = await groqRes.text();
+  let groqData;
+  try {
+    groqData = JSON.parse(rawText);
+  } catch {
+    return { ok: false, groqRes, rawText, groqData: null, model };
+  }
+  return { ok: groqRes.ok, groqRes, rawText, groqData, model };
+}
+
+function assistantContent(groqData) {
+  const c = groqData?.choices?.[0]?.message?.content;
+  return typeof c === "string" ? c : null;
+}
 const MIN_LENGTH = 20;
 const MAX_LENGTH = 12000;
 
@@ -174,70 +205,105 @@ module.exports = async function handler(req, res) {
       ? `WRITING TASK (the candidate must follow this):\n${topic}\n\n---\n\nCANDIDATE'S TEXT (evaluate this response against the task above):\n${trimmed}\n\nFaqat JSON qaytaring.`
       : `Quyidagi matnni IELTS Writing mezonlari bo'yicha baholang va faqat JSON qaytaring:\n\n${trimmed}`;
 
+  const groqPayload = {
+    temperature: 0.2,
+    max_tokens: 4096,
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: userMessage },
+    ],
+  };
+
   try {
-    const groqRes = await fetch(GROQ_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        temperature: 0.2,
-        max_tokens: 4096,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userMessage },
-        ],
-      }),
-    });
-
-    const rawText = await groqRes.text();
-    let groqData;
-    try {
-      groqData = JSON.parse(rawText);
-    } catch {
-      res.statusCode = 502;
-      res.setHeader("Content-Type", "application/json; charset=utf-8");
-      res.end(JSON.stringify({ error: "Groq javobi noto‘g‘ri JSON" }));
-      return;
+    let r = await groqChat(apiKey, MODEL_PRIMARY, groqPayload);
+    if (!r.ok || !r.groqData) {
+      r = await groqChat(apiKey, MODEL_FALLBACK, groqPayload);
     }
 
-    if (!groqRes.ok) {
+    if (!r.ok || !r.groqData) {
       const msg =
-        groqData.error?.message ||
-        groqData.message ||
-        `Groq xato: ${groqRes.status}`;
-      res.statusCode = groqRes.status >= 400 && groqRes.status < 600 ? groqRes.status : 502;
+        r.groqData?.error?.message ||
+        (r.groqData && r.groqData.message) ||
+        (r.groqRes ? `Groq xato: ${r.groqRes.status}` : "Groq javobi noto‘g‘ri");
+      res.statusCode =
+        r.groqRes && r.groqRes.status >= 400 && r.groqRes.status < 600 ? r.groqRes.status : 502;
       res.setHeader("Content-Type", "application/json; charset=utf-8");
-      res.end(JSON.stringify({ error: msg }));
+      res.end(JSON.stringify({ error: msg, modelTried: r.model }));
       return;
     }
 
-    const content = groqData.choices?.[0]?.message?.content;
-    if (!content || typeof content !== "string") {
-      res.statusCode = 502;
-      res.setHeader("Content-Type", "application/json; charset=utf-8");
-      res.end(JSON.stringify({ error: "Model bo‘sh javob qaytardi" }));
-      return;
+    const tryParse = (content) => {
+      const parsed = parseModelJson(content);
+      validateResult(parsed);
+      setOverallFromCriteria(parsed);
+      return parsed;
+    };
+
+    let content = assistantContent(r.groqData);
+    if (!content) {
+      if (r.model === MODEL_PRIMARY) {
+        r = await groqChat(apiKey, MODEL_FALLBACK, groqPayload);
+        if (r.ok && r.groqData) content = assistantContent(r.groqData);
+      }
+      if (!content) {
+        res.statusCode = 502;
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.end(JSON.stringify({ error: "Model bo‘sh javob qaytardi" }));
+        return;
+      }
     }
 
     let parsed;
     try {
-      parsed = parseModelJson(content);
-      validateResult(parsed);
-      setOverallFromCriteria(parsed);
+      parsed = tryParse(content);
     } catch (e) {
-      res.statusCode = 502;
-      res.setHeader("Content-Type", "application/json; charset=utf-8");
-      res.end(
-        JSON.stringify({
-          error: "Modeldan kelgan JSON tahlil qilinmadi",
-          details: e instanceof Error ? e.message : undefined,
-          raw: content.length > 2000 ? content.slice(0, 2000) + "…" : content,
-        })
-      );
-      return;
+      if (r.model === MODEL_PRIMARY) {
+        r = await groqChat(apiKey, MODEL_FALLBACK, groqPayload);
+        if (!r.ok || !r.groqData) {
+          res.statusCode = 502;
+          res.setHeader("Content-Type", "application/json; charset=utf-8");
+          res.end(
+            JSON.stringify({
+              error: "Modeldan kelgan JSON tahlil qilinmadi",
+              details: e instanceof Error ? e.message : undefined,
+              raw: content.length > 2000 ? content.slice(0, 2000) + "…" : content,
+            })
+          );
+          return;
+        }
+        const content2 = assistantContent(r.groqData);
+        if (!content2) {
+          res.statusCode = 502;
+          res.setHeader("Content-Type", "application/json; charset=utf-8");
+          res.end(JSON.stringify({ error: "Zaxira model bo‘sh javob" }));
+          return;
+        }
+        try {
+          parsed = tryParse(content2);
+        } catch (e2) {
+          res.statusCode = 502;
+          res.setHeader("Content-Type", "application/json; charset=utf-8");
+          res.end(
+            JSON.stringify({
+              error: "Modeldan kelgan JSON tahlil qilinmadi (zaxira)",
+              details: e2 instanceof Error ? e2.message : undefined,
+              raw: content2.length > 2000 ? content2.slice(0, 2000) + "…" : content2,
+            })
+          );
+          return;
+        }
+      } else {
+        res.statusCode = 502;
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.end(
+          JSON.stringify({
+            error: "Modeldan kelgan JSON tahlil qilinmadi",
+            details: e instanceof Error ? e.message : undefined,
+            raw: content.length > 2000 ? content.slice(0, 2000) + "…" : content,
+          })
+        );
+        return;
+      }
     }
 
     res.statusCode = 200;
