@@ -203,6 +203,110 @@
       .speaking-q-visual img {
         display: block;
       }
+      .speaking-vocab-hint {
+        border-radius: 0.75rem;
+        border: 1px solid rgba(251, 191, 36, 0.22);
+        background: rgba(245, 158, 11, 0.06);
+        padding: 0.65rem 0.75rem;
+      }
+      .speaking-vocab-hint .speaking-vocab-hint-title {
+        font-size: 0.625rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(253, 230, 138, 0.92);
+      }
+      .speaking-vocab-hint .speaking-vocab-chips {
+        margin-top: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
+      .speaking-vocab-hint .speaking-vocab-chip {
+        border-radius: 0.375rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.28);
+        padding: 0.2rem 0.45rem;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        color: rgba(237, 233, 254, 0.95);
+      }
+      .speaking-arg-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.75rem;
+        line-height: 1.45;
+      }
+      .speaking-arg-table th,
+      .speaking-arg-table td {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 0.65rem 0.75rem;
+        vertical-align: top;
+        text-align: left;
+      }
+      .speaking-arg-table thead th {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .speaking-arg-table thead th.for-col {
+        background: rgba(16, 185, 129, 0.12);
+        color: rgba(167, 243, 208, 0.95);
+      }
+      .speaking-arg-table thead th.against-col {
+        background: rgba(244, 63, 94, 0.1);
+        color: rgba(254, 205, 211, 0.95);
+      }
+      .speaking-arg-table tbody td {
+        color: rgba(233, 212, 255, 0.88);
+        background: rgba(0, 0, 0, 0.2);
+      }
+      .speaking-arg-table tbody tr:nth-child(even) td {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .speaking-arg-table .idx-cell {
+        width: 2rem;
+        text-align: center;
+        font-weight: 700;
+        color: rgba(196, 181, 253, 0.85);
+      }
+      .speaking-arg-helper-wrap {
+        border-radius: 0.75rem;
+        border: 1px solid rgba(167, 139, 250, 0.28);
+        background: linear-gradient(165deg, rgba(76, 29, 149, 0.22) 0%, rgba(15, 23, 42, 0.55) 100%);
+        padding: 0.9rem 1rem 1rem;
+        box-shadow: 0 12px 40px -24px rgba(139, 92, 246, 0.45);
+      }
+      .speaking-arg-helper-title {
+        font-size: 0.6875rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(221, 214, 254, 0.96);
+        margin-bottom: 0.35rem;
+      }
+      .speaking-arg-helper-desc {
+        font-size: 0.6875rem;
+        line-height: 1.5;
+        color: rgba(196, 181, 253, 0.78);
+        margin-bottom: 0.65rem;
+      }
+      .speaking-arg-helper-table {
+        font-size: 0.78rem;
+      }
+      .speaking-arg-helper-table th,
+      .speaking-arg-helper-table td {
+        padding: 0.55rem 0.65rem;
+      }
+      .speaking-books-table thead th.for-col {
+        background: rgba(245, 158, 11, 0.14);
+        color: rgba(254, 243, 199, 0.96);
+      }
+      .speaking-books-table thead th.against-col {
+        background: rgba(14, 165, 233, 0.14);
+        color: rgba(224, 242, 254, 0.96);
+      }
     </style>
   </head>
   <body class="mesh-bg min-h-screen antialiased text-white selection:bg-fuchsia-500/35 selection:text-white">
@@ -267,6 +371,12 @@
         <button type="button" class="speaking-tab" data-part="p3" role="tab" aria-selected="false">Part 3</button>
       </div>
 
+      <p
+        id="speaking-day-badge"
+        class="mx-auto mb-6 hidden w-full max-w-2xl rounded-xl border border-violet-400/25 bg-violet-500/10 px-4 py-2.5 text-center text-sm font-semibold text-violet-100/95 backdrop-blur-sm"
+        role="status"
+      ></p>
+
       <main class="flex flex-col items-center">
         <!-- Savollar (tab panel) -->
         <div class="mb-8 w-full max-w-2xl">
@@ -280,7 +390,7 @@
           <!-- Part 1.2 -->
           <div id="panel-p12" class="part-panel is-hidden rounded-2xl border border-white/12 bg-white/[0.05] p-5 backdrop-blur-xl sm:p-6" role="tabpanel" data-part="p12">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300/95">Part 1.2 · Picture Description</p>
-            <p class="mt-1 text-xs text-purple-200/65">Tayyorgarlik yo‘q · har bir savol uchun 30 soniya · rasmlar questions.js (imgUrl)</p>
+            <p class="mt-1 text-xs text-purple-200/65">Tayyorgarlik yo‘q · 30 soniya · rasmlar assets/day7/</p>
             <div class="mt-5 space-y-8" id="inject-p12"></div>
           </div>
 
@@ -293,7 +403,7 @@
 
           <!-- Part 3 -->
           <div id="panel-p3" class="part-panel is-hidden rounded-2xl border border-white/12 bg-white/[0.05] p-5 backdrop-blur-xl sm:p-6" role="tabpanel" data-part="p3">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300/95">Part 3 · Discussion / Two-way Role Play</p>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300/95">Part 3 · Discussion</p>
             <p class="mt-1 text-xs text-purple-200/65">1 daqiqa tayyorgarlik · 2 daqiqa nutq · taymer nutq vaqtini ko‘rsatadi</p>
             <div class="mt-5" id="inject-p3"></div>
           </div>
@@ -308,7 +418,7 @@
           <p id="countdown-display" class="countdown-pulse mt-1 font-mono text-4xl font-bold tabular-nums tracking-tight text-white sm:text-5xl">
             0:30
           </p>
-          <p id="countdown-caption" class="mt-2 text-center text-xs text-purple-200/55">Yozuv boshlanganda orqaga sanash boshlanadi (Part 1 → 30s, Part 2–3 → 2 min).</p>
+          <p id="countdown-caption" class="mt-2 text-center text-xs text-purple-200/55">Yozuv boshlanganda orqaga sanash boshlanadi (Part 1 → 30s, Part 2 va 3 → 2 min).</p>
         </div>
 
         <!-- Audio visualizer -->
@@ -488,9 +598,66 @@
           return wrap;
         }
 
+        function makeTwoImageGrid(urls, captions, altBase) {
+          var outer = document.createElement("div");
+          outer.className =
+            "speaking-q-visual mb-4 overflow-hidden rounded-2xl border border-cyan-500/35 bg-gradient-to-b from-cyan-500/[0.14] via-black/35 to-black/55 p-2 shadow-[0_16px_56px_-20px_rgba(34,211,238,0.42)] ring-1 ring-inset ring-white/10 sm:p-3";
+          var grid = document.createElement("div");
+          grid.className = "grid grid-cols-2 gap-2 sm:gap-3";
+          for (var j = 0; j < urls.length; j++) {
+            var cell = document.createElement("div");
+            cell.className = "overflow-hidden rounded-xl border border-white/10 bg-black/40";
+            var img = document.createElement("img");
+            img.src = urls[j];
+            img.alt = (captions && captions[j]) || altBase || "Speaking rasm";
+            img.className = "h-28 w-full object-cover sm:h-32";
+            img.loading = "lazy";
+            img.decoding = "async";
+            cell.appendChild(img);
+            var cap = document.createElement("p");
+            cap.className = "border-t border-white/10 px-2 py-1 text-center text-[9px] text-purple-300/75";
+            cap.textContent = (captions && captions[j]) || "";
+            cell.appendChild(cap);
+            grid.appendChild(cell);
+          }
+          outer.appendChild(grid);
+          return outer;
+        }
+
+        function makeVocabularyHint(words, titleOpt) {
+          var aside = document.createElement("aside");
+          aside.className = "speaking-vocab-hint mb-3";
+          aside.setAttribute("aria-label", titleOpt || "Vocabulary Hint");
+          var t = document.createElement("p");
+          t.className = "speaking-vocab-hint-title";
+          t.textContent = titleOpt || "Vocabulary Hint";
+          aside.appendChild(t);
+          var row = document.createElement("div");
+          row.className = "speaking-vocab-chips";
+          for (var v = 0; v < words.length; v++) {
+            var chip = document.createElement("span");
+            chip.className = "speaking-vocab-chip";
+            chip.textContent = words[v];
+            row.appendChild(chip);
+          }
+          aside.appendChild(row);
+          return aside;
+        }
+
         function renderSpeakingUI() {
           var SQ = window.SILVA_SPEAKING_QUESTIONS;
           if (!SQ) return;
+
+          var dayBadge = document.getElementById("speaking-day-badge");
+          if (dayBadge) {
+            if (SQ.dayTitle) {
+              dayBadge.textContent = SQ.dayTitle;
+              dayBadge.classList.remove("hidden");
+            } else {
+              dayBadge.textContent = "";
+              dayBadge.classList.add("hidden");
+            }
+          }
 
           var p11 = document.getElementById("inject-p11");
           var p12 = document.getElementById("inject-p12");
@@ -511,7 +678,17 @@
           (SQ.part12 || []).forEach(function (item, i) {
             var block = document.createElement("div");
             block.className = "speaking-q-block";
-            if (item.imgUrl) block.appendChild(makeQuestionImageBlock(item.imgUrl, item.tag));
+            if (item.imgUrls && item.imgUrls.length >= 2) {
+              block.appendChild(
+                makeTwoImageGrid(item.imgUrls, item.imageCaptions || [], item.tag || "Speaking")
+              );
+            } else if (item.imgUrl) {
+              block.appendChild(makeQuestionImageBlock(item.imgUrl, item.tag));
+            }
+            var vocab = item.vocabularyWords;
+            if (vocab && vocab.length) {
+              block.appendChild(makeVocabularyHint(vocab, item.vocabularyHintTitle));
+            }
             block.appendChild(makeQuestionButton("p12", i, item, i === 0));
             p12.appendChild(block);
           });
@@ -554,52 +731,97 @@
           }
 
           p3.replaceChildren();
-          var d3 = SQ.part3;
+          var d3 = SQ.part3 || SQ.part4;
           if (d3) {
-            var card = document.createElement("div");
-            card.className = "rounded-xl border border-white/10 bg-black/25 p-4";
-            var tl = document.createElement("p");
-            tl.className = "text-xs font-semibold uppercase tracking-wider text-cyan-300/85";
-            tl.textContent = d3.topicLabel || "";
-            card.appendChild(tl);
-            var pq = document.createElement("p");
-            pq.className = "mt-3 text-sm font-medium leading-relaxed text-white/92";
-            pq.textContent = d3.question || "";
-            card.appendChild(pq);
-            var grid = document.createElement("div");
-            grid.className = "mt-5 grid gap-4 sm:grid-cols-2";
-            var forCol = document.createElement("div");
-            forCol.className = "rounded-lg border border-emerald-500/25 bg-emerald-500/5 p-3";
-            var forLabel = document.createElement("p");
-            forLabel.className = "text-[10px] font-semibold uppercase tracking-wider text-emerald-300/90";
-            forLabel.textContent = "Points for";
-            forCol.appendChild(forLabel);
-            var ulf = document.createElement("ul");
-            ulf.className = "mt-2 list-disc space-y-1.5 pl-4 text-xs leading-relaxed text-purple-100/85";
-            (d3.pointsFor || []).forEach(function (t) {
-              var li = document.createElement("li");
-              li.textContent = t;
-              ulf.appendChild(li);
-            });
-            forCol.appendChild(ulf);
-            var againstCol = document.createElement("div");
-            againstCol.className = "rounded-lg border border-rose-500/25 bg-rose-500/5 p-3";
-            var agLabel = document.createElement("p");
-            agLabel.className = "text-[10px] font-semibold uppercase tracking-wider text-rose-300/90";
-            agLabel.textContent = "Points against";
-            againstCol.appendChild(agLabel);
-            var ula = document.createElement("ul");
-            ula.className = "mt-2 list-disc space-y-1.5 pl-4 text-xs leading-relaxed text-purple-100/85";
-            (d3.pointsAgainst || []).forEach(function (t) {
-              var li = document.createElement("li");
-              li.textContent = t;
-              ula.appendChild(li);
-            });
-            againstCol.appendChild(ula);
-            grid.appendChild(forCol);
-            grid.appendChild(againstCol);
-            card.appendChild(grid);
-            p3.appendChild(card);
+            if (d3.imgUrl) {
+              var hero3 = document.createElement("div");
+              hero3.className =
+                "mb-5 overflow-hidden rounded-2xl border border-fuchsia-500/25 bg-black/40 shadow-[0_14px_52px_-18px_rgba(168,85,247,0.35)] ring-1 ring-white/10";
+              var im3 = document.createElement("img");
+              im3.src = d3.imgUrl;
+              im3.alt = d3.question || "Part 3";
+              im3.className = "max-h-44 w-full object-cover object-center sm:max-h-48";
+              im3.loading = "lazy";
+              im3.decoding = "async";
+              hero3.appendChild(im3);
+              var cap3 = document.createElement("p");
+              cap3.className = "border-t border-white/10 bg-black/45 px-3 py-2 text-center text-[10px] text-fuchsia-200/80";
+              cap3.textContent = "Part 3 · Mavzu rasmi";
+              hero3.appendChild(cap3);
+              p3.appendChild(hero3);
+            }
+
+            var card3 = document.createElement("div");
+            card3.className = "rounded-xl border border-white/10 bg-black/25 p-4";
+            var tl3 = document.createElement("p");
+            tl3.className = "text-xs font-semibold uppercase tracking-wider text-cyan-300/85";
+            tl3.textContent = d3.topicLabel || "";
+            card3.appendChild(tl3);
+            var pq3 = document.createElement("p");
+            pq3.className = "mt-3 text-sm font-medium leading-relaxed text-white/92";
+            pq3.textContent = d3.question || "";
+            card3.appendChild(pq3);
+
+            var helperWrap = document.createElement("div");
+            helperWrap.className = "speaking-arg-helper-wrap mt-5";
+            helperWrap.setAttribute("role", "region");
+            helperWrap.setAttribute(
+              "aria-label",
+              (d3.argumentHelperLabel || "Yordamchi argumentlar") + " — taqqoslash jadvali"
+            );
+
+            var helperTitleEl = document.createElement("p");
+            helperTitleEl.className = "speaking-arg-helper-title";
+            helperTitleEl.textContent = d3.argumentHelperLabel || "Yordamchi argumentlar";
+            helperWrap.appendChild(helperTitleEl);
+
+            var help3 = document.createElement("p");
+            help3.className = "speaking-arg-helper-desc";
+            help3.textContent = d3.helperNote || "Yordamchi jadval.";
+            helperWrap.appendChild(help3);
+
+            var labels = d3.columnLabels || {};
+            var pf3 = d3.pointsFor || [];
+            var pa3 = d3.pointsAgainst || [];
+            var n3 = Math.max(pf3.length, pa3.length);
+            var table3 = document.createElement("table");
+            table3.className = "speaking-arg-table speaking-arg-helper-table mt-2";
+            table3.setAttribute("role", "table");
+            var thead3 = document.createElement("thead");
+            var hr3 = document.createElement("tr");
+            var th0c = document.createElement("th");
+            th0c.className = "idx-cell";
+            th0c.textContent = "#";
+            hr3.appendChild(th0c);
+            var th1c = document.createElement("th");
+            th1c.className = "for-col";
+            th1c.textContent = labels.forCol || "FOR";
+            hr3.appendChild(th1c);
+            var th2c = document.createElement("th");
+            th2c.className = "against-col";
+            th2c.textContent = labels.againstCol || "AGAINST";
+            hr3.appendChild(th2c);
+            thead3.appendChild(hr3);
+            table3.appendChild(thead3);
+            var tbody3 = document.createElement("tbody");
+            for (var r3 = 0; r3 < n3; r3++) {
+              var tr3 = document.createElement("tr");
+              var td0c = document.createElement("td");
+              td0c.className = "idx-cell";
+              td0c.textContent = String(r3 + 1);
+              tr3.appendChild(td0c);
+              var td1c = document.createElement("td");
+              td1c.textContent = pf3[r3] != null ? pf3[r3] : "—";
+              tr3.appendChild(td1c);
+              var td2c = document.createElement("td");
+              td2c.textContent = pa3[r3] != null ? pa3[r3] : "—";
+              tr3.appendChild(td2c);
+              tbody3.appendChild(tr3);
+            }
+            table3.appendChild(tbody3);
+            helperWrap.appendChild(table3);
+            card3.appendChild(helperWrap);
+            p3.appendChild(card3);
           }
         }
 
@@ -679,7 +901,7 @@
           if (activePart === "p11" || activePart === "p12") {
             countdownCaption.textContent = "Part 1 · har bir javob uchun 30 soniya (mikrofonni bosing).";
           } else {
-            countdownCaption.textContent = "Part 2–3 · nutq uchun 2 daqiqa (mikrofonni bosing).";
+            countdownCaption.textContent = "Part 2 va 3 · nutq uchun 2 daqiqa (mikrofonni bosing).";
           }
         }
 

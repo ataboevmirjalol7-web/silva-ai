@@ -1,7 +1,7 @@
 /**
  * Silva AI — Writing va Speaking savollar bazasi.
  * Writing: `tests` — har biri to‘liq mini-test (kontekst + Task 1.1 / 1.2 / Part 2). writing.html tasodifiy bittasini tanlaydi.
- * Speaking: SILVA_SPEAKING_QUESTIONS (speaking.html, imgUrl ixtiyoriy).
+ * Speaking: SILVA_SPEAKING_QUESTIONS (imgUrl/imgUrls; vocabularyWords; part3: Argument Helper / jadval).
  */
 (function () {
   var CANTEEN_CONTEXT =
@@ -246,56 +246,73 @@
 
   /**
    * Speaking — multi-level savollar (speaking.html).
-   * imgUrl: ixtiyoriy; bo‘lsa, savol matnidan oldin rasm ko‘rsatiladi.
+   * Day 7: Part 1.2 assets/day7/ (car vs bus); part3.argumentHelperLabel (masalan Argument Helper).
    */
   window.SILVA_SPEAKING_QUESTIONS = {
+    dayTitle: "Silva AI Speaking: Day 7 (Test 7)",
+
     part11: [
-      { tag: "Online Shopping", question: "Have you ever bought clothes online?" },
-      { tag: "Colors", question: "What is your favorite color?" },
-      { tag: "Technology", question: "Do you use computers?" },
+      { tag: "Pets", question: "Do you have a pet?" },
+      { tag: "Reading", question: "How often do you read books?" },
+      { tag: "Cinema", question: "Who is your favourite actor or actress?" },
     ],
 
     part12: [
       {
-        tag: "Image Analysis",
-        question:
-          "What do you see in these pictures? (Comparing office work vs. working from home with a child).",
-        imgUrl: "assets/office-home.jpg",
+        tag: "Transport · Pictures",
+        question: "What do you see in these pictures?",
+        imgUrls: ["assets/day7/part12-car.png", "assets/day7/part12-bus.png"],
+        imageCaptions: ["Haydovchi xursand holda avtomobil boshqarmoqda", "Yo‘lovchilar avtobusda safarda"],
+        vocabularyWords: [
+          "Cheerful",
+          "Grip",
+          "Journey",
+          "Passenger",
+          "Diverse",
+          "Economical",
+          "Environmentally friendly",
+        ],
       },
       {
-        tag: "Opinion",
-        question:
-          "Which do you think is better for working in teams: working in an office or from home?",
+        tag: "Advantages",
+        question: "What are the advantages of taking a bus instead of a taxi?",
       },
       {
-        tag: "Economics",
-        question: "Do you think companies save money if employees work from home?",
+        tag: "Preference",
+        question: "Do you prefer to travel by bus or by taxi?",
       },
     ],
 
     part2: {
-      imgUrl: "assets/ambition.jpg",
-      title: "Ambition",
-      caption: "Topic · Ambition",
+      imgUrl: "assets/day7/part2-significant-change.png",
+      title: "Significant Change",
+      caption: "Topic · Significant Change · Day 7",
       bullets: [
-        "Tell me about a time when you pursued an ambitious goal.",
-        "How did this experience change your understanding of ambition?",
-        "What impact does ambition have on people’s lives and society as a whole?",
+        "Describe a time in your life when you experienced a significant change.",
+        "How has this change affected your personal growth or outlook on life?",
+        "Why do you think people sometimes struggle with change?",
       ],
     },
 
     part3: {
-      topicLabel: "Topic · Renewable Energy",
-      question: "Should countries invest more in renewable energy sources?",
+      topicLabel: "Part 3 · Discussion",
+      question: "Sports teams should be allowed to pay players based on their performance.",
+      argumentHelperLabel: "Argument Helper",
+      helperNote:
+        "Performance-based pay mavzusi uchun quyidagi jadvaldan foydalaning: har bir qatorda FOR va AGAINST fikrlarni solishtiring va o‘z pozitsiyangizni asoslang.",
+      columnLabels: {
+        forCol: "Rozilar (FOR)",
+        againstCol: "Qarshilar (AGAINST)",
+      },
       pointsFor: [
-        "Reduces dependence on fossil fuels",
-        "Long-term economic benefits",
-        "Cost-effective and efficient",
+        "Encourages athletes to give their best and improves team performance.",
+        "Rewards hard work and skill in a transparent way.",
+        "Makes teams more competitive and financially efficient.",
       ],
       pointsAgainst: [
-        "Expensive initial investment",
-        "Weather-dependent and unreliable",
-        "Challenging to transition without disrupting economies",
+        "May lead to unhealthy competition and pressure on players.",
+        "Cause inequality within teams (some positions have fewer chances to shine).",
+        "Players might focus on individual success rather than team cooperation.",
       ],
     },
   };
