@@ -1,32 +1,36 @@
-/**
- * Silva AI — Supabase Auth (Google OAuth).
- *
- * Tekshiruv (Dashboard → Settings → API):
- * 1) Project URL — "Project URL" qatori, odatda https://xxxx.supabase.co (bo‘sh joy / oxirgi / yo‘q).
- * 2) anon public — "Project API keys" ostidagi "anon" "public" kalit (JWT, juda uzun satr).
- *
- * Ikkalasini ham to‘liq nusxalab, faqat qo'shtirnoqlar ichidagi matnni almashtiring.
- * Authentication → URL Configuration: Redirect URL (Vercel yoki lokal index.html).
- */
+// auth.js — Silva AI (Supabase + Google OAuth)
+// Brauzerda `supabase.createClient` yo‘q; createClient CDN dan import qilinadi.
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-// ↓ Supabase Dashboard → Settings → API dan nusxalang (placeholderlarni o‘chirib yozing)
-const SUPABASE_URL = "SIZNING_SUPABASE_URL_SHU_YERGA";
-const SUPABASE_ANON_KEY = "SIZNING_SUPABASE_ANON_KEY_SHU_YERGA";
-
-// Diqqat! Vercel / production da qiymatlar bo‘lmasa — konsolda xabar.
-if (!SUPABASE_URL || SUPABASE_URL === "SIZNING_SUPABASE_URL_SHU_YERGA") {
-  console.error("Supabase URL topilmadi!");
+/**
+ * Vercel / mahalliy: Environment o‘qish (ixtiyoriy).
+ * Agar build inject qilmasa, index.html boshida quyidagicha berishingiz mumkin:
+ *   <script>window.__ENV = { SUPABASE_URL: "...", SUPABASE_ANON_KEY: "..." };</script>
+ */
+function readEnv(key, fallback) {
+  try {
+    var e = typeof window !== "undefined" && window.__ENV;
+    if (e && typeof e[key] === "string" && e[key].length) return e[key];
+    if (typeof import.meta !== "undefined" && import.meta.env && import.meta.env[key])
+      return String(import.meta.env[key]);
+  } catch (_) {}
+  return fallback;
 }
-if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === "SIZNING_SUPABASE_ANON_KEY_SHU_YERGA") {
-  console.error("Supabase Anon Key topilmadi!");
-}
 
-const supabase =
-  SUPABASE_URL &&
-  SUPABASE_URL !== "SIZNING_SUPABASE_URL_SHU_YERGA" &&
-  SUPABASE_ANON_KEY &&
-  SUPABASE_ANON_KEY !== "SIZNING_SUPABASE_ANON_KEY_SHU_YERGA"
+const SUPABASE_URL =
+  readEnv(
+    "SUPABASE_URL",
+    window.location.hostname === "localhost"
+      ? "https://znzybymwzmezqrqlocvm.supabase.co"
+      : "https://znzybymwzmezqrqlocvm.supabase.co"
+  ) || "https://znzybymwzmezqrqlocvm.supabase.co";
+
+// Dashboard → Settings → API → anon (public). To‘liq JWT ni joylang yoki window.__ENV orqali bering.
+const SUPABASE_ANON_KEY = readEnv("SUPABASE_ANON_KEY", "");
+
+const supabaseClient =
+  SUPABASE_URL && SUPABASE_ANON_KEY
     ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         auth: { flowType: "pkce", detectSessionInUrl: true },
       })
@@ -34,33 +38,12 @@ const supabase =
 
 const SILVA_USER_KEY = "silva_user";
 
-function getOAuthRedirectUrl() {
-  const { origin, pathname } = window.location;
-  if (pathname.endsWith("index.html")) return origin + pathname;
-  if (pathname === "/" || pathname === "") return origin + "/index.html";
-  const base = pathname.replace(/\/[^/]*$/, "/");
-  return origin + base + "index.html";
-}
-
-function isIndexPage() {
-  const p = window.location.pathname;
-  return /index\.html$/i.test(p) || p === "/" || p === "";
-}
-
-function hasAuthCallbackInUrl() {
-  const h = window.location.hash;
-  const s = window.location.search;
-  if (h && (h.includes("access_token") || h.includes("code="))) return true;
-  if (s && (s.includes("code=") || s.includes("error="))) return true;
-  return false;
-}
-
 function persistUserToStorage(user) {
-  const m = user.user_metadata || {};
-  const id0 = user.identities && user.identities[0];
-  const idData = (id0 && id0.identity_data) || {};
-  const name = m.full_name || m.name || idData.full_name || idData.name || user.email || "";
-  const picture = m.avatar_url || m.picture || idData.avatar_url || idData.picture || "";
+  var m = user.user_metadata || {};
+  var id0 = user.identities && user.identities[0];
+  var idData = (id0 && id0.identity_data) || {};
+  var name = m.full_name || m.name || idData.full_name || idData.name || user.email || "";
+  var picture = m.avatar_url || m.picture || idData.avatar_url || idData.picture || "";
   try {
     localStorage.setItem(
       SILVA_USER_KEY,
@@ -71,61 +54,48 @@ function persistUserToStorage(user) {
         updatedAt: Date.now(),
       })
     );
-  } catch (e) {
-    console.warn("localStorage yozilmadi:", e);
+  } catch (err) {
+    console.warn("localStorage:", err);
   }
 }
 
-let postLoginRedirectScheduled = false;
+function oauthRedirectUrl() {
+  return window.location.origin + "/writing.html";
+}
 
-function redirectToWritingAfterLogin() {
-  if (postLoginRedirectScheduled) return;
-  if (!isIndexPage()) return;
-  postLoginRedirectScheduled = true;
+async function loginWithGoogle() {
+  if (!supabaseClient) return;
   try {
-    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-  } catch (_) {}
-  window.location.assign("writing.html");
+    var res = await supabaseClient.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: oauthRedirectUrl(),
+      },
+    });
+    if (res.error) throw res.error;
+  } catch (err) {
+    console.error("Login hatosi:", err && err.message ? err.message : err);
+    alert("Login qilishda muammo yuz berdi.");
+  }
 }
 
 function initAuthSession() {
-  if (!supabase) return;
+  if (!supabaseClient) return;
 
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (!session?.user) return;
-    var fromOAuth =
-      event === "SIGNED_IN" || (event === "INITIAL_SESSION" && isIndexPage() && hasAuthCallbackInUrl());
-    if (!fromOAuth) return;
-    persistUserToStorage(session.user);
-    redirectToWritingAfterLogin();
+  supabaseClient.auth.getSession().then(function (_ref) {
+    var session = _ref.data && _ref.data.session;
+    if (session && session.user) persistUserToStorage(session.user);
+  });
+
+  supabaseClient.auth.onAuthStateChange(function (event, session) {
+    if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session && session.user) {
+      persistUserToStorage(session.user);
+    }
   });
 }
 
-async function signInWithGoogle() {
-  if (!supabase) {
-    window.alert(
-      "Supabase hali sozlanmagan.\n\nauth.js ichida SUPABASE_URL va SUPABASE_ANON_KEY ni o‘z qiymatlaringiz bilan almashtiring (Dashboard → Settings → API)."
-    );
-    return;
-  }
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: getOAuthRedirectUrl(),
-    },
-  });
-  if (error) {
-    console.error(error);
-    window.alert(error.message || "Google orqali kirishda xatolik.");
-  }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("btn-google-login");
-  if (btn) {
-    btn.addEventListener("click", function () {
-      signInWithGoogle();
-    });
-  }
+document.addEventListener("DOMContentLoaded", function () {
+  var btn = document.getElementById("btn-google-login");
+  if (btn) btn.addEventListener("click", loginWithGoogle);
   initAuthSession();
 });
