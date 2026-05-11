@@ -76,6 +76,133 @@
     setBarAndValue("inton-bar", "inton-value", scores.intonation);
   }
 
+  /** IELTS band (0–9) → progress foizi */
+  function bandToPercent(band) {
+    var n = Number(band);
+    if (!isFinite(n) || n < 0) return 0;
+    n = Math.min(9, Math.max(0, n));
+    return Math.round((n / 9) * 100);
+  }
+
+  var speakingData = { part1: "", part2: "", part3: "", scores: [] };
+
+  function resetSpeakingData() {
+    speakingData.part1 = "";
+    speakingData.part2 = "";
+    speakingData.part3 = "";
+    speakingData.scores = [];
+    try {
+      sessionStorage.removeItem("silva_speaking_data");
+    } catch (_) {}
+    var cert = $("speaking-overall-band");
+    if (cert) {
+      cert.textContent = "";
+      cert.classList.add("is-hidden");
+    }
+  }
+
+  function showFinalCertificate(finalScores) {
+    if (!finalScores || typeof finalScores !== "object") return;
+    var overall = finalScores.overall != null ? Number(finalScores.overall) : NaN;
+    var pronunciation =
+      finalScores.pronunciation != null ? Number(finalScores.pronunciation) : NaN;
+    var vocabulary = finalScores.vocabulary != null ? Number(finalScores.vocabulary) : NaN;
+    var grammar = finalScores.grammar != null ? Number(finalScores.grammar) : NaN;
+    if (!isFinite(pronunciation)) pronunciation = isFinite(overall) ? overall : 6;
+    if (!isFinite(vocabulary)) vocabulary = isFinite(overall) ? overall : 6;
+    if (!isFinite(grammar)) grammar = isFinite(overall) ? overall : 6;
+    if (!isFinite(overall)) overall = (pronunciation + vocabulary + grammar) / 3;
+
+    var intoApprox = Math.round(bandToPercent(overall * 0.95 + 0.2));
+    intoApprox = Math.max(30, Math.min(98, intoApprox));
+
+    updateUI({
+      pronunciation: Math.max(30, Math.min(98, bandToPercent(pronunciation))),
+      vocabulary: Math.max(30, Math.min(98, bandToPercent(vocabulary))),
+      intonation: intoApprox,
+    });
+
+    speakingData.scores.push(finalScores);
+
+    var el = $("speaking-overall-band");
+    if (el) {
+      var g = isFinite(grammar) ? grammar : "—";
+      var line =
+        "Umumiy band: " +
+        (isFinite(overall) ? overall : "—") +
+        " · Pronunciation: " +
+        pronunciation +
+        " · Vocabulary: " +
+        vocabulary +
+        " · Grammar: " +
+        g;
+      if (finalScores._fallback) line += " (lokal baho — API xato)";
+      el.textContent = line;
+      el.classList.remove("is-hidden");
+    }
+
+    try {
+      sessionStorage.setItem("silva_speaking_data", JSON.stringify(speakingData));
+    } catch (_) {}
+  }
+
+  async function calculateFinalOverallScore() {
+    try {
+      var res = await fetch("/api/speaking-final", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          part1: speakingData.part1,
+          part2: speakingData.part2,
+          part3: speakingData.part3,
+        }),
+      });
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || "speaking-final xato");
+      showFinalCertificate(data);
+    } catch (e) {
+      console.warn("calculateFinalOverallScore:", e);
+      showFinalCertificate({
+        overall: 6.5,
+        pronunciation: 6.5,
+        vocabulary: 6.5,
+        grammar: 6.5,
+        _fallback: true,
+      });
+    }
+  }
+
+  async function finalizePart(partNumber, transcript) {
+    var t = String(transcript || "").trim();
+    if (!t && partNumber !== 3) return;
+
+    if (t) {
+      if (partNumber === 1) {
+        speakingData.part1 = speakingData.part1 ? speakingData.part1 + "\n\n---\n\n" + t : t;
+      } else if (partNumber === 2) {
+        speakingData.part2 = t;
+      } else if (partNumber === 3) {
+        speakingData.part3 = t;
+      }
+    }
+
+    if (t) {
+      updateUI(calculateHaqqoniyScores(t));
+    } else if (partNumber === 3) {
+      updateUI({ pronunciation: 40, vocabulary: 40, intonation: 40 });
+    }
+
+    try {
+      sessionStorage.setItem("silva_speaking_data", JSON.stringify(speakingData));
+    } catch (_) {}
+
+    console.log("Part " + partNumber + " saqlandi.");
+
+    if (partNumber === 3) {
+      await calculateFinalOverallScore();
+    }
+  }
+
   /** Speech API confidence bilan aralash ball (ixtiyoriy). UI ni o‘zgartirmaydi. */
   function computeScores(text, confidence) {
     var s = calculateHaqqoniyScores(text);
@@ -108,6 +235,11 @@
     computeScores: computeScores,
     applyScoresToDom: applyScoresToDom,
     setMicStatus: setMicStatus,
+    speakingData: speakingData,
+    finalizePart: finalizePart,
+    calculateFinalOverallScore: calculateFinalOverallScore,
+    showFinalCertificate: showFinalCertificate,
+    resetSpeakingData: resetSpeakingData,
   };
 
   if (!SR) {
@@ -171,8 +303,9 @@
       }
       var text = finalTranscript.trim();
       if (wasRecording && text.length && ctx.onScores) {
-        var mapped = handleGroqResponse(text);
-        if (mapped) ctx.onScores(mapped, text);
+        var s = calculateHaqqoniyScores(text);
+        var mapped = { pron: s.pronunciation, into: s.intonation, vocab: s.vocabulary };
+        ctx.onScores(mapped, text);
       } else if (wasRecording && ctx.onScores) {
         ctx.onScores({ pron: 40, into: 40, vocab: 40 }, text);
       }

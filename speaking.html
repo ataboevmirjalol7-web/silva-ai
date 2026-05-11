@@ -506,6 +506,11 @@
         >
           <h2 class="text-lg font-bold text-white sm:text-xl">Natijalar</h2>
           <p class="mt-1 text-xs text-purple-200/55">Namuna baholari (UI demo). Keyinchalik API bilan almashtiriladi.</p>
+          <p
+            id="speaking-overall-band"
+            class="is-hidden mt-3 rounded-lg border border-amber-400/25 bg-amber-500/10 px-3 py-2 text-sm leading-relaxed text-amber-100/95"
+            role="status"
+          ></p>
 
           <div class="mt-6 space-y-5">
             <div class="result-row">
@@ -895,7 +900,18 @@
             onRecordingState(isRec) {
               if (!isRec) recording = false;
             },
-            onScores(scores, transcript) {
+            async onScores(scores, transcript) {
+              const partNumForScores =
+                activePart === "p11" || activePart === "p12"
+                  ? 1
+                  : activePart === "p2"
+                    ? 2
+                    : activePart === "p3"
+                      ? 3
+                      : 1;
+              if (window.SilvaSpeakingMic && typeof SilvaSpeakingMic.finalizePart === "function") {
+                await SilvaSpeakingMic.finalizePart(partNumForScores, transcript);
+              }
               console.log("Siz aytdingiz:", transcript);
               recording = false;
               sessionFinalizeLock = false;
@@ -913,7 +929,7 @@
               runAnalyzeProgress(1600, () => {
                 analyzingBlock.classList.add("is-hidden");
                 analyzeBar.style.width = "0%";
-                showResults(scores);
+                showResults(scores, { skipBars: partNumForScores === 3 });
                 micBtn.disabled = false;
                 micBtn.classList.remove("opacity-45", "pointer-events-none");
               });
@@ -1178,8 +1194,10 @@
           };
         }
 
-        function showResults(scores) {
+        function showResults(scores, opts) {
+          opts = opts || {};
           resultsBlock.classList.remove("is-hidden");
+          if (opts.skipBars) return;
           barPron.style.width = "0%";
           barInto.style.width = "0%";
           barVocab.style.width = "0%";
@@ -1293,6 +1311,9 @@
         });
 
         resetBtn.addEventListener("click", () => {
+          if (window.SilvaSpeakingMic && typeof SilvaSpeakingMic.resetSpeakingData === "function") {
+            SilvaSpeakingMic.resetSpeakingData();
+          }
           if (useSpeechMic && recording) {
             SilvaSpeakingMic.abort();
           }
