@@ -1,9 +1,9 @@
 /**
- * Vercel Serverless: IELTS Writing tahlili — Groq API.
+ * Vercel Serverless: Silva AI — IELTS Writing tahlili (Groq API).
  * Modellar: avval llama-3.3-70b-versatile, xato bo‘lsa llama3-70b-8192.
  * Environment: GROQ_API_KEY
  *
- * POST /api/check-writing
+ * POST /api/check-silva
  * Body: { "essay": "...", "topic": "..." } — topic ixtiyoriy (generatsiya qilingan topshiriq matni).
  * Response: JSON — har bir kriteriya uchun ball va tahlil (overallBand qo‘shiladi).
  */

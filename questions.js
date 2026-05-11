@@ -1,7 +1,7 @@
 /**
- * Liva AI — Writing va Speaking savollar bazasi.
+ * Silva AI — Writing va Speaking savollar bazasi.
  * Writing: task11, task12, part2 — alohida massivlar.
- * Speaking: LIVA_SPEAKING_QUESTIONS (speaking.html, imgUrl ixtiyoriy).
+ * Speaking: SILVA_SPEAKING_QUESTIONS (speaking.html, imgUrl ixtiyoriy).
  */
 (function () {
   var CANTEEN_CONTEXT =
@@ -13,7 +13,7 @@
     "Best wishes,\n" +
     "The Canteen Manager";
 
-  window.LIVA_WRITING_QUESTIONS = {
+  window.SILVA_WRITING_QUESTIONS = {
     /** Task 1.1 va 1.2 uchun umumiy xabar (Topic Generator: Context bloki) */
     canteenContext: CANTEEN_CONTEXT,
 
@@ -49,7 +49,7 @@
    * Speaking — multi-level savollar (speaking.html).
    * imgUrl: ixtiyoriy; bo‘lsa, savol matnidan oldin rasm ko‘rsatiladi.
    */
-  window.LIVA_SPEAKING_QUESTIONS = {
+  window.SILVA_SPEAKING_QUESTIONS = {
     part11: [
       { tag: "Online Shopping", question: "Have you ever bought clothes online?" },
       { tag: "Colors", question: "What is your favorite color?" },

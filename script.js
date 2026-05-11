@@ -1,8 +1,8 @@
 /**
- * writing.html — Step-by-step full test (1.1 → 1.2 → Part 2); Analyze: POST /api/check-writing.
+ * writing.html — Step-by-step full test (1.1 → 1.2 → Part 2); Analyze: POST /api/check-silva.
  */
 (function () {
-  const API_ANALYZE = "/api/check-writing";
+  const API_ANALYZE = "/api/check-silva";
 
   const MIN_WORDS_BY_TASK = {
     task11: 45,
@@ -282,8 +282,8 @@
       selectedTask = stepToTaskKey(currentStep);
 
       const bank =
-        typeof window !== "undefined" && window.LIVA_WRITING_QUESTIONS
-          ? window.LIVA_WRITING_QUESTIONS
+        typeof window !== "undefined" && window.SILVA_WRITING_QUESTIONS
+          ? window.SILVA_WRITING_QUESTIONS
           : null;
       const list = bank && bank[selectedTask] ? bank[selectedTask] : null;
 
@@ -292,7 +292,7 @@
         if (topicContextWrap) topicContextWrap.classList.add("hidden");
         if (topicError) {
           topicError.textContent =
-            "Savollar topilmadi — questions.js yuklanganini tekshiring (LIVA_WRITING_QUESTIONS).";
+            "Savollar topilmadi — questions.js yuklanganini tekshiring (SILVA_WRITING_QUESTIONS).";
           topicError.classList.remove("hidden");
         }
         syncAnalyzeControls();
