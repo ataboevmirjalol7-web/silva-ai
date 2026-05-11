@@ -1,6 +1,5 @@
 /**
- * Silva AI Speaking — Web Speech API (haqiqiy nutqni matnga aylantirish).
- * Brauzer: Chrome/Edge (webkitSpeechRecognition). Firefox odatda qo‘llab-quvvatlamaydi.
+ * Silva AI Speaking — Web Speech API + Groq transcript uchun ball (speaking.html).
  */
 (function (global) {
   var SR = global.SpeechRecognition || global.webkitSpeechRecognition;
@@ -9,54 +8,92 @@
     return document.getElementById(id);
   }
 
-  /**
-   * @param {string} text
-   * @param {number} confidence 0..1
-   * @returns {{ pron: number, into: number, vocab: number }}
-   */
-  function computeScores(text, confidence) {
-    var pronScore = Math.round(Math.min(1, Math.max(0, confidence)) * 100);
-    var words = text
+  /** Groq dan (yoki boshqa manbadan) matn kelganda — asosiy kirish nuqtasi */
+  function handleGroqResponse(transcript) {
+    if (!transcript || !String(transcript).trim()) return null;
+
+    console.log("Groq transcript:", transcript);
+
+    var scores = calculateHaqqoniyScores(transcript);
+    updateUI(scores);
+
+    return {
+      pron: scores.pronunciation,
+      into: scores.intonation,
+      vocab: scores.vocabulary,
+    };
+  }
+
+  function calculateHaqqoniyScores(text) {
+    var words = String(text)
       .trim()
       .split(/\s+/)
       .filter(function (w) {
         return w.length > 0;
       });
-    var n = words.length || 1;
-    var unique = new Set(
+    var wordCount = words.length;
+
+    var pronScore = Math.min(98, 65 + (wordCount > 5 ? 20 : wordCount * 4));
+
+    var uniqueWords = new Set(
       words.map(function (w) {
-        return w.toLowerCase().replace(/[^a-z0-9'-]/gi, "");
+        return w.toLowerCase();
       })
     ).size;
-    var vocabScore = Math.min(100, Math.round((unique / n) * 110));
-    var sentences = text.split(/[.!?]+/).filter(function (s) {
-      return s.trim().length > 0;
-    }).length;
-    var density = n / Math.max(1, sentences);
-    var intoScore = Math.min(
-      94,
-      Math.round(42 + Math.min(density * 8, 28) + Math.min(n / 4, 24))
-    );
+    var denom = wordCount || 1;
+    var vocabScore = Math.round((uniqueWords / denom) * 100);
+    vocabScore = Math.max(35, Math.min(98, vocabScore));
+
+    var intonScore = Math.min(95, 60 + wordCount * 1.5);
+    intonScore = Math.max(38, Math.min(96, Math.round(intonScore)));
+
+    pronScore = Math.max(35, Math.min(98, Math.round(pronScore)));
+
     return {
-      pron: Math.max(35, Math.min(98, pronScore)),
-      into: Math.max(38, Math.min(96, intoScore)),
-      vocab: Math.max(35, Math.min(98, vocabScore)),
+      pronunciation: pronScore,
+      vocabulary: vocabScore,
+      intonation: intonScore,
+    };
+  }
+
+  function setBarAndValue(barId, valId, percent) {
+    var bar = $(barId);
+    var val = $(valId);
+    if (bar) bar.style.width = percent + "%";
+    if (val) val.textContent = percent + "%";
+  }
+
+  /** speaking.html: bar-pron, score-pron, …; ixtiyoriy: pron-bar, pron-value, … */
+  function updateUI(scores) {
+    if (!scores) return;
+
+    setBarAndValue("bar-pron", "score-pron", scores.pronunciation);
+    setBarAndValue("bar-vocab", "score-vocab", scores.vocabulary);
+    setBarAndValue("bar-into", "score-into", scores.intonation);
+
+    setBarAndValue("pron-bar", "pron-value", scores.pronunciation);
+    setBarAndValue("vocab-bar", "vocab-value", scores.vocabulary);
+    setBarAndValue("inton-bar", "inton-value", scores.intonation);
+  }
+
+  /** Speech API confidence bilan aralash ball (ixtiyoriy). UI ni o‘zgartirmaydi. */
+  function computeScores(text, confidence) {
+    var s = calculateHaqqoniyScores(text);
+    var c = typeof confidence === "number" ? confidence : 0.72;
+    var blend = Math.round(0.45 * s.pronunciation + 0.55 * Math.min(100, Math.max(0, c) * 100));
+    return {
+      pron: Math.max(35, Math.min(98, blend)),
+      into: Math.max(38, Math.min(96, s.intonation)),
+      vocab: Math.max(35, Math.min(98, s.vocabulary)),
     };
   }
 
   function applyScoresToDom(scores) {
-    var barPron = $("bar-pron");
-    var barInto = $("bar-into");
-    var barVocab = $("bar-vocab");
-    var scorePron = $("score-pron");
-    var scoreInto = $("score-into");
-    var scoreVocab = $("score-vocab");
-    if (scorePron) scorePron.textContent = scores.pron + "%";
-    if (scoreInto) scoreInto.textContent = scores.into + "%";
-    if (scoreVocab) scoreVocab.textContent = scores.vocab + "%";
-    if (barPron) barPron.style.width = scores.pron + "%";
-    if (barInto) barInto.style.width = scores.into + "%";
-    if (barVocab) barVocab.style.width = scores.vocab + "%";
+    updateUI({
+      pronunciation: scores.pron,
+      vocabulary: scores.vocab,
+      intonation: scores.into,
+    });
   }
 
   function setMicStatus(text) {
@@ -64,12 +101,17 @@
     if (el) el.textContent = text || "";
   }
 
+  var sharedApi = {
+    handleGroqResponse: handleGroqResponse,
+    calculateHaqqoniyScores: calculateHaqqoniyScores,
+    updateUI: updateUI,
+    computeScores: computeScores,
+    applyScoresToDom: applyScoresToDom,
+    setMicStatus: setMicStatus,
+  };
+
   if (!SR) {
-    global.SilvaSpeakingMic = {
-      supported: false,
-      computeScores: computeScores,
-      applyScoresToDom: applyScoresToDom,
-    };
+    global.SilvaSpeakingMic = Object.assign({ supported: false }, sharedApi);
     return;
   }
 
@@ -128,10 +170,9 @@
         return;
       }
       var text = finalTranscript.trim();
-      var conf = confN > 0 ? confSum / confN : 0.72;
       if (wasRecording && text.length && ctx.onScores) {
-        var scores = computeScores(text, conf);
-        ctx.onScores(scores, text);
+        var mapped = handleGroqResponse(text);
+        if (mapped) ctx.onScores(mapped, text);
       } else if (wasRecording && ctx.onScores) {
         ctx.onScores({ pron: 40, into: 40, vocab: 40 }, text);
       }
@@ -141,70 +182,69 @@
     return recognition;
   }
 
-  global.SilvaSpeakingMic = {
-    supported: true,
-    computeScores: computeScores,
-    applyScoresToDom: applyScoresToDom,
-    setMicStatus: setMicStatus,
+  global.SilvaSpeakingMic = Object.assign(
+    {
+      supported: true,
+      isRecording: function () {
+        return isRecording;
+      },
 
-    isRecording: function () {
-      return isRecording;
-    },
+      configure: function (callbacks) {
+        if (callbacks && typeof callbacks === "object") {
+          ctx.onScores = callbacks.onScores || null;
+          ctx.onStatus = callbacks.onStatus || null;
+          ctx.onError = callbacks.onError || null;
+          ctx.onRecordingState = callbacks.onRecordingState || null;
+        }
+      },
 
-    configure: function (callbacks) {
-      if (callbacks && typeof callbacks === "object") {
-        ctx.onScores = callbacks.onScores || null;
-        ctx.onStatus = callbacks.onStatus || null;
-        ctx.onError = callbacks.onError || null;
-        ctx.onRecordingState = callbacks.onRecordingState || null;
-      }
-    },
+      start: function () {
+        var rec = ensureRecognition();
+        finalTranscript = "";
+        confSum = 0;
+        confN = 0;
+        try {
+          rec.start();
+          isRecording = true;
+          if (ctx.onRecordingState) ctx.onRecordingState(true);
+          setMicStatus("Eshityapman...");
+          if (ctx.onStatus) ctx.onStatus("Eshityapman...");
+          console.log("SpeechRecognition: boshlandi");
+        } catch (e) {
+          isRecording = false;
+          if (ctx.onError) ctx.onError(e);
+        }
+      },
 
-    start: function () {
-      var rec = ensureRecognition();
-      finalTranscript = "";
-      confSum = 0;
-      confN = 0;
-      try {
-        rec.start();
-        isRecording = true;
-        if (ctx.onRecordingState) ctx.onRecordingState(true);
-        setMicStatus("Eshityapman...");
-        if (ctx.onStatus) ctx.onStatus("Eshityapman...");
-        console.log("SpeechRecognition: boshlandi");
-      } catch (e) {
+      stop: function () {
+        if (!recognition || !isRecording) return;
+        try {
+          setMicStatus("Tahlil qilinyapti...");
+          if (ctx.onStatus) ctx.onStatus("Tahlil qilinyapti...");
+          recognition.stop();
+        } catch (e) {
+          isRecording = false;
+          if (ctx.onError) ctx.onError(e);
+        }
+      },
+
+      abort: function () {
+        skipNextEnd = true;
+        finalTranscript = "";
+        confSum = 0;
+        confN = 0;
+        try {
+          if (recognition && isRecording) recognition.stop();
+        } catch (_) {}
         isRecording = false;
-        if (ctx.onError) ctx.onError(e);
-      }
-    },
+        setMicStatus("");
+      },
 
-    stop: function () {
-      if (!recognition || !isRecording) return;
-      try {
-        setMicStatus("Tahlil qilinyapti...");
-        if (ctx.onStatus) ctx.onStatus("Tahlil qilinyapti...");
-        recognition.stop();
-      } catch (e) {
-        isRecording = false;
-        if (ctx.onError) ctx.onError(e);
-      }
+      toggle: function () {
+        if (!isRecording) this.start();
+        else this.stop();
+      },
     },
-
-    abort: function () {
-      skipNextEnd = true;
-      finalTranscript = "";
-      confSum = 0;
-      confN = 0;
-      try {
-        if (recognition && isRecording) recognition.stop();
-      } catch (_) {}
-      isRecording = false;
-      setMicStatus("");
-    },
-
-    toggle: function () {
-      if (!isRecording) this.start();
-      else this.stop();
-    },
-  };
+    sharedApi
+  );
 })(typeof window !== "undefined" ? window : globalThis);
