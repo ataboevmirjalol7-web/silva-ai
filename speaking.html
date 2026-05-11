@@ -184,6 +184,53 @@
         background: rgba(34, 211, 238, 0.1) !important;
         box-shadow: 0 0 24px rgba(34, 211, 238, 0.15);
       }
+      .question-card.active {
+        border-color: rgba(59, 130, 246, 0.85) !important;
+        background: rgba(37, 99, 235, 0.14) !important;
+        box-shadow:
+          0 0 0 2px rgba(59, 130, 246, 0.5),
+          0 0 28px rgba(59, 130, 246, 0.22);
+      }
+      .speaking-q-row-done .question-card:not(.active) {
+        opacity: 0.9;
+      }
+      #countdown-wrap.countdown-zero-flash {
+        animation: countdown-zero-flash 0.85s ease-out;
+      }
+      #countdown-display.countdown-zero-shake {
+        animation: countdown-zero-shake 0.55s ease-out;
+      }
+      @keyframes countdown-zero-flash {
+        0% {
+          box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0.45);
+        }
+        35% {
+          box-shadow:
+            inset 0 0 48px 2px rgba(239, 68, 68, 0.25),
+            0 0 32px rgba(248, 113, 113, 0.35);
+        }
+        100% {
+          box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0);
+        }
+      }
+      @keyframes countdown-zero-shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        20% {
+          transform: translateX(-5px);
+        }
+        40% {
+          transform: translateX(5px);
+        }
+        60% {
+          transform: translateX(-3px);
+        }
+        80% {
+          transform: translateX(3px);
+        }
+      }
       #countdown-wrap:not(.is-recording) .countdown-pulse {
         animation: none;
         opacity: 0.85;
@@ -383,14 +430,23 @@
           <!-- Part 1.1 -->
           <div id="panel-p11" class="part-panel rounded-2xl border border-white/12 bg-white/[0.05] p-5 backdrop-blur-xl sm:p-6" role="tabpanel" data-part="p11">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300/95">Part 1.1 · Personal Questions</p>
-            <p class="mt-1 text-xs text-purple-200/65">Tayyorgarlik yo‘q · har bir savol uchun 30 soniya · savollar: questions.js</p>
+            <p class="mt-1 text-xs text-purple-200/65">
+              Task 1.1: 3 ta savol ketma-ket. Mikrofonni bosing — birinchi savol bilan 0:30 taymer va yozuv avtomatik boshlanadi; vaqt tugagach keyingi savolga o‘tadi (Groq tahlil).
+            </p>
             <div class="mt-5 space-y-4" id="inject-p11"></div>
+            <p
+              id="task11-average-banner"
+              class="is-hidden mt-4 rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-4 py-3 text-sm font-medium leading-snug text-emerald-100/95"
+              role="status"
+            ></p>
           </div>
 
           <!-- Part 1.2 -->
           <div id="panel-p12" class="part-panel is-hidden rounded-2xl border border-white/12 bg-white/[0.05] p-5 backdrop-blur-xl sm:p-6" role="tabpanel" data-part="p12">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300/95">Part 1.2 · Picture Description</p>
-            <p class="mt-1 text-xs text-purple-200/65">Tayyorgarlik yo‘q · 30 soniya · rasmlar assets/day7/</p>
+            <p class="mt-1 text-xs text-purple-200/65">
+              Task 1.2: 3 ta savol ketma-ket. Mikrofon — 0:30 avto o‘tish va Groq ballar (Part 1.1 bilan bir xil oqim).
+            </p>
             <div class="mt-5 space-y-8" id="inject-p12"></div>
           </div>
 
@@ -574,10 +630,14 @@
       (function () {
         document.getElementById("year").textContent = new Date().getFullYear();
 
+        /** Part 1.1 / 1.2 ketma-ket 30s + avto keyingi savol */
+        var speakingSeq = { active: false, part: null, index: 0, count: 3 };
+
         function makeQuestionButton(part, index, item, selected) {
           var btn = document.createElement("button");
           btn.type = "button";
-          btn.className = "question-card w-full" + (selected ? " question-card-selected" : "");
+          btn.className =
+            "question-card min-w-0 flex-1 text-left" + (selected ? " question-card-selected active" : "");
           btn.setAttribute("data-part", part);
           btn.setAttribute("data-q-index", String(index));
           var tag = document.createElement("span");
@@ -589,6 +649,21 @@
           btn.appendChild(tag);
           btn.appendChild(q);
           return btn;
+        }
+
+        function makeQuestionRow(part, index, item, selected) {
+          var row = document.createElement("div");
+          row.className = "speaking-q-row flex w-full items-stretch gap-2 sm:gap-3";
+          row.setAttribute("data-part", part);
+          row.setAttribute("data-q-index", String(index));
+          row.appendChild(makeQuestionButton(part, index, item, selected));
+          var check = document.createElement("span");
+          check.className =
+            "question-done-check flex shrink-0 select-none items-center justify-center self-center rounded-lg px-1 text-lg leading-none opacity-0 transition-opacity duration-200";
+          check.textContent = "✅";
+          check.setAttribute("aria-hidden", "true");
+          row.appendChild(check);
+          return row;
         }
 
         function makeQuestionImageBlock(url, altText) {
@@ -673,16 +748,18 @@
           if (!p11 || !p12 || !p2 || !p3) return;
 
           p11.replaceChildren();
-          (SQ.part11 || []).forEach(function (item, i) {
+          var list11 = SQ.task11Questions || SQ.part11 || [];
+          list11.forEach(function (item, i) {
             var block = document.createElement("div");
             block.className = "speaking-q-block";
             if (item.imgUrl) block.appendChild(makeQuestionImageBlock(item.imgUrl, item.tag));
-            block.appendChild(makeQuestionButton("p11", i, item, i === 0));
+            block.appendChild(makeQuestionRow("p11", i, item, i === 0));
             p11.appendChild(block);
           });
 
           p12.replaceChildren();
-          (SQ.part12 || []).forEach(function (item, i) {
+          var list12 = SQ.task12Questions || SQ.part12 || [];
+          list12.forEach(function (item, i) {
             var block = document.createElement("div");
             block.className = "speaking-q-block";
             if (item.imgUrls && item.imgUrls.length >= 2) {
@@ -696,7 +773,7 @@
             if (vocab && vocab.length) {
               block.appendChild(makeVocabularyHint(vocab, item.vocabularyHintTitle));
             }
-            block.appendChild(makeQuestionButton("p12", i, item, i === 0));
+            block.appendChild(makeQuestionRow("p12", i, item, i === 0));
             p12.appendChild(block);
           });
 
@@ -834,6 +911,7 @@
 
         function bindQuestionCardSelection() {
           function handle(e) {
+            if (speakingSeq.active) return;
             var card = e.target.closest(".question-card");
             if (!card) return;
             var part = card.getAttribute("data-part");
@@ -878,6 +956,159 @@
 
         const useSpeechMic = window.SilvaSpeakingMic && SilvaSpeakingMic.supported;
 
+        function resetPartQuestionsUi(part) {
+          document.querySelectorAll("#inject-" + part + " .speaking-q-row").forEach(function (row) {
+            row.classList.remove("speaking-q-row-done");
+            var check = row.querySelector(".question-done-check");
+            if (check) {
+              check.classList.remove("opacity-100");
+              check.classList.add("opacity-0");
+            }
+          });
+          document.querySelectorAll("#inject-" + part + " .question-card").forEach(function (c) {
+            c.classList.remove("active");
+            c.classList.remove("question-card-selected");
+          });
+        }
+
+        function markQuestionRowDone(part, index) {
+          var row = document.querySelector(
+            '#inject-' + part + ' .speaking-q-row[data-q-index="' + index + '"]'
+          );
+          if (!row) return;
+          row.classList.add("speaking-q-row-done");
+          var check = row.querySelector(".question-done-check");
+          if (check) {
+            check.classList.remove("opacity-0");
+            check.classList.add("opacity-100");
+          }
+          var card = row.querySelector(".question-card");
+          if (card) card.classList.remove("active");
+        }
+
+        function setActiveQuestionRow(part, index) {
+          document.querySelectorAll("#inject-" + part + " .speaking-q-row").forEach(function (row) {
+            var i = parseInt(row.getAttribute("data-q-index"), 10);
+            var card = row.querySelector(".question-card");
+            if (!card) return;
+            var on = i === index;
+            card.classList.toggle("active", on);
+            card.classList.toggle("question-card-selected", on);
+          });
+        }
+
+        function triggerTimerZeroVisual() {
+          countdownWrap.classList.add("countdown-zero-flash");
+          countdownDisplay.classList.add("countdown-zero-shake");
+          window.setTimeout(function () {
+            countdownWrap.classList.remove("countdown-zero-flash");
+            countdownDisplay.classList.remove("countdown-zero-shake");
+          }, 900);
+        }
+
+        function abortSequentialCycle() {
+          if (!speakingSeq.active) return;
+          speakingSeq.active = false;
+          speakingSeq.part = null;
+          speakingSeq.index = 0;
+          clearCountdown();
+          setRecordingCountdownUi(false);
+          if (useSpeechMic && window.SilvaSpeakingMic && SilvaSpeakingMic.isRecording && SilvaSpeakingMic.isRecording()) {
+            SilvaSpeakingMic.abort();
+          }
+          recording = false;
+          sessionFinalizeLock = false;
+          micBtn.disabled = false;
+          micBtn.classList.remove("opacity-45", "pointer-events-none");
+          micBtn.setAttribute("aria-pressed", "false");
+          micBtn.classList.remove("is-recording");
+          hintIdle.classList.remove("is-hidden");
+          hintRec.classList.add("is-hidden");
+          if (micStatus) micStatus.textContent = "";
+          analyzingBlock.classList.add("is-hidden");
+        }
+
+        async function handleSequentialOnScores(scores, transcript) {
+          var part = speakingSeq.part;
+          var idx = speakingSeq.index;
+          if (!part) return;
+
+          var mapped = scores;
+          if (window.SilvaSpeakingMic && typeof SilvaSpeakingMic.scoreTranscriptWithGroq === "function") {
+            var g = await SilvaSpeakingMic.scoreTranscriptWithGroq(transcript);
+            if (g) mapped = g;
+          }
+
+          if (mapped && window.SilvaSpeakingMic && typeof SilvaSpeakingMic.applyScoresToDom === "function") {
+            SilvaSpeakingMic.applyScoresToDom(mapped);
+          }
+          showResults(mapped, { skipBars: true });
+          resultsBlock.classList.remove("is-hidden");
+
+          if (part === "p11" && SilvaSpeakingMic.recordTask11QuestionScore) {
+            SilvaSpeakingMic.recordTask11QuestionScore(mapped);
+          }
+
+          if (typeof SilvaSpeakingMic.finalizePart === "function") {
+            await SilvaSpeakingMic.finalizePart(1, transcript, mapped);
+          }
+
+          markQuestionRowDone(part, idx);
+
+          speakingSeq.index += 1;
+          if (speakingSeq.index < speakingSeq.count) {
+            setActiveQuestionRow(part, speakingSeq.index);
+            recording = true;
+            micBtn.setAttribute("aria-pressed", "true");
+            micBtn.classList.add("is-recording");
+            hintIdle.classList.add("is-hidden");
+            hintRec.classList.remove("is-hidden");
+            window.setTimeout(function () {
+              if (!speakingSeq.active || speakingSeq.part !== part) return;
+              if (!useSpeechMic) return;
+              SilvaSpeakingMic.start();
+              setRecordingCountdownUi(true);
+              startCountdownFromRecording();
+            }, 220);
+            return;
+          }
+
+          speakingSeq.active = false;
+          speakingSeq.part = null;
+          speakingSeq.index = 0;
+          recording = false;
+          micBtn.setAttribute("aria-pressed", "false");
+          micBtn.classList.remove("is-recording");
+          hintIdle.classList.remove("is-hidden");
+          hintRec.classList.add("is-hidden");
+          if (micStatus) micStatus.textContent = "";
+          clearCountdown();
+          setRecordingCountdownUi(false);
+
+          if (part === "p11" && SilvaSpeakingMic.getTask11AverageMapped) {
+            var avg = SilvaSpeakingMic.getTask11AverageMapped();
+            if (avg) {
+              SilvaSpeakingMic.applyScoresToDom(avg);
+              var ban = document.getElementById("task11-average-banner");
+              if (ban) {
+                ban.textContent =
+                  "Task 1.1 yakuniy o‘rtacha: Pronunciation " +
+                  avg.pron +
+                  "% · Intonation " +
+                  avg.into +
+                  "% · Vocabulary " +
+                  avg.vocab +
+                  "%";
+                ban.classList.remove("is-hidden");
+              }
+            }
+          }
+
+          showResults(mapped, { skipBars: true });
+          micBtn.disabled = false;
+          micBtn.classList.remove("opacity-45", "pointer-events-none");
+        }
+
         function startSpeechRecording() {
           if (!useSpeechMic) return;
           SilvaSpeakingMic.start();
@@ -898,9 +1129,14 @@
         if (useSpeechMic) {
           SilvaSpeakingMic.configure({
             onRecordingState(isRec) {
+              if (!isRec && speakingSeq.active) return;
               if (!isRec) recording = false;
             },
             async onScores(scores, transcript) {
+              if (speakingSeq.active) {
+                await handleSequentialOnScores(scores, transcript);
+                return;
+              }
               const partNumForScores =
                 activePart === "p11" || activePart === "p12"
                   ? 1
@@ -935,6 +1171,9 @@
               });
             },
             onError(err) {
+              if (speakingSeq.active) {
+                abortSequentialCycle();
+              }
               showError(String(err && err.message ? err.message : err || "Speech API xatosi"));
               recording = false;
               sessionFinalizeLock = false;
@@ -1011,6 +1250,7 @@
             countdownRemaining -= 1;
             countdownDisplay.textContent = formatClock(countdownRemaining);
             if (countdownRemaining <= 0) {
+              triggerTimerZeroVisual();
               clearCountdown();
               finishRecordingAfterTimer();
             }
@@ -1040,6 +1280,9 @@
               return;
             }
             if (analyzeProgressTimer != null) return;
+            if (speakingSeq.active) {
+              abortSequentialCycle();
+            }
             hideError();
             activateTab(part);
           });
@@ -1267,10 +1510,35 @@
             if (!recording) {
               try {
                 hideError();
+                if (activePart === "p11" || activePart === "p12") {
+                  speakingSeq.active = true;
+                  speakingSeq.part = activePart;
+                  speakingSeq.index = 0;
+                  speakingSeq.count =
+                    document.querySelectorAll("#inject-" + activePart + " .speaking-q-row").length ||
+                    3;
+                  if (activePart === "p11" && SilvaSpeakingMic.resetTask11SequentialScores) {
+                    SilvaSpeakingMic.resetTask11SequentialScores();
+                  }
+                  if (activePart === "p11") {
+                    var banStart = document.getElementById("task11-average-banner");
+                    if (banStart) {
+                      banStart.classList.add("is-hidden");
+                      banStart.textContent = "";
+                    }
+                  }
+                  resetPartQuestionsUi(activePart);
+                  setActiveQuestionRow(activePart, 0);
+                } else {
+                  speakingSeq.active = false;
+                  speakingSeq.part = null;
+                }
                 startSpeechRecording();
                 setRecordingCountdownUi(true);
                 startCountdownFromRecording();
               } catch (e) {
+                speakingSeq.active = false;
+                speakingSeq.part = null;
                 showError("Nutqni eshitishni boshlashda xatolik.");
                 clearCountdown();
                 setRecordingCountdownUi(false);
@@ -1281,6 +1549,10 @@
                 hintRec.classList.add("is-hidden");
                 if (micStatus) micStatus.textContent = "";
               }
+              return;
+            }
+            if (speakingSeq.active) {
+              abortSequentialCycle();
               return;
             }
             stopSpeechRecordingForAnalysis();
@@ -1311,8 +1583,16 @@
         });
 
         resetBtn.addEventListener("click", () => {
+          abortSequentialCycle();
           if (window.SilvaSpeakingMic && typeof SilvaSpeakingMic.resetSpeakingData === "function") {
             SilvaSpeakingMic.resetSpeakingData();
+          }
+          resetPartQuestionsUi("p11");
+          resetPartQuestionsUi("p12");
+          var banReset = document.getElementById("task11-average-banner");
+          if (banReset) {
+            banReset.classList.add("is-hidden");
+            banReset.textContent = "";
           }
           if (useSpeechMic && recording) {
             SilvaSpeakingMic.abort();

@@ -86,11 +86,76 @@
 
   var speakingData = { part1: "", part2: "", part3: "", scores: [] };
 
+  /** Task 1.1 — ketma-ket 3 savol uchun har bir javob balli (o‘rtacha hisoblash). */
+  var task11PerQuestionScores = [];
+
+  function resetTask11SequentialScores() {
+    task11PerQuestionScores = [];
+  }
+
+  function recordTask11QuestionScore(mapped) {
+    if (!mapped || typeof mapped !== "object") return;
+    var pron = mapped.pron != null ? mapped.pron : mapped.pronunciation;
+    var into = mapped.into != null ? mapped.into : mapped.intonation;
+    var vocab = mapped.vocab != null ? mapped.vocab : mapped.vocabulary;
+    if (!isFinite(pron) || !isFinite(into) || !isFinite(vocab)) return;
+    task11PerQuestionScores.push({
+      pron: Math.round(pron),
+      into: Math.round(into),
+      vocab: Math.round(vocab),
+    });
+  }
+
+  function getTask11AverageMapped() {
+    if (!task11PerQuestionScores.length) return null;
+    var n = task11PerQuestionScores.length;
+    var p = 0;
+    var i = 0;
+    var v = 0;
+    task11PerQuestionScores.forEach(function (x) {
+      p += x.pron;
+      i += x.into;
+      v += x.vocab;
+    });
+    return {
+      pron: Math.round(p / n),
+      into: Math.round(i / n),
+      vocab: Math.round(v / n),
+    };
+  }
+
+  async function scoreTranscriptWithGroq(transcript) {
+    var text = String(transcript || "").trim();
+    if (!text) return null;
+    try {
+      var res = await fetch("/api/speaking-score-one", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: text }),
+      });
+      var d = await res.json();
+      if (!res.ok || !d) return null;
+      var pron = Number(d.pronunciation);
+      var into = Number(d.intonation);
+      var vocab = Number(d.vocabulary);
+      if (!isFinite(pron) || !isFinite(into) || !isFinite(vocab)) return null;
+      return {
+        pron: Math.max(35, Math.min(98, Math.round(pron))),
+        into: Math.max(35, Math.min(98, Math.round(into))),
+        vocab: Math.max(35, Math.min(98, Math.round(vocab))),
+      };
+    } catch (e) {
+      console.warn("scoreTranscriptWithGroq:", e);
+      return null;
+    }
+  }
+
   function resetSpeakingData() {
     speakingData.part1 = "";
     speakingData.part2 = "";
     speakingData.part3 = "";
     speakingData.scores = [];
+    resetTask11SequentialScores();
     try {
       sessionStorage.removeItem("silva_speaking_data");
     } catch (_) {}
@@ -172,7 +237,7 @@
     }
   }
 
-  async function finalizePart(partNumber, transcript) {
+  async function finalizePart(partNumber, transcript, mappedOverride) {
     var t = String(transcript || "").trim();
     if (!t && partNumber !== 3) return;
 
@@ -186,7 +251,21 @@
       }
     }
 
-    if (t) {
+    if (mappedOverride && typeof mappedOverride === "object") {
+      var po =
+        mappedOverride.pron != null ? mappedOverride.pron : mappedOverride.pronunciation;
+      var vo = mappedOverride.vocab != null ? mappedOverride.vocab : mappedOverride.vocabulary;
+      var io = mappedOverride.into != null ? mappedOverride.into : mappedOverride.intonation;
+      if (isFinite(po) && isFinite(io) && isFinite(vo)) {
+        updateUI({
+          pronunciation: Math.round(po),
+          vocabulary: Math.round(vo),
+          intonation: Math.round(io),
+        });
+      } else if (t) {
+        updateUI(calculateHaqqoniyScores(t));
+      }
+    } else if (t) {
       updateUI(calculateHaqqoniyScores(t));
     } else if (partNumber === 3) {
       updateUI({ pronunciation: 40, vocabulary: 40, intonation: 40 });
@@ -240,10 +319,14 @@
     calculateFinalOverallScore: calculateFinalOverallScore,
     showFinalCertificate: showFinalCertificate,
     resetSpeakingData: resetSpeakingData,
+    scoreTranscriptWithGroq: scoreTranscriptWithGroq,
+    recordTask11QuestionScore: recordTask11QuestionScore,
+    getTask11AverageMapped: getTask11AverageMapped,
+    resetTask11SequentialScores: resetTask11SequentialScores,
   };
 
   if (!SR) {
-    global.SilvaSpeakingMic = Object.assign({ supported: false }, sharedApi);
+    global.SilvaSpeakingMic = Object.assign({ supported: false, isRecording: function () { return false; } }, sharedApi);
     return;
   }
 

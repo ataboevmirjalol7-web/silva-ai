@@ -316,4 +316,14 @@
       ],
     },
   };
+
+  /** Ketma-ket rejim: Task 1.1 / 1.2 — har biri 3 savol (massiv havolalari + global nusxa). */
+  (function wireSpeakingQuestionArrays() {
+    var S = window.SILVA_SPEAKING_QUESTIONS;
+    if (!S) return;
+    S.task11Questions = S.part11;
+    S.task12Questions = S.part12;
+    window.SILVA_SPEAKING_TASK_11_QUESTIONS = (S.part11 || []).slice();
+    window.SILVA_SPEAKING_TASK_12_QUESTIONS = (S.part12 || []).slice();
+  })();
 })();
