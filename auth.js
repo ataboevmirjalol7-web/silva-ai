@@ -1,10 +1,16 @@
 /**
  * Silva AI — Supabase Auth (Google OAuth).
- * Dashboard → Settings → API: URL va anon key.
- * Authentication → URL Configuration: Redirect URL (masalan Vercel domeningiz/index.html).
+ *
+ * Tekshiruv (Dashboard → Settings → API):
+ * 1) Project URL — "Project URL" qatori, odatda https://xxxx.supabase.co (bo‘sh joy / oxirgi / yo‘q).
+ * 2) anon public — "Project API keys" ostidagi "anon" "public" kalit (JWT, juda uzun satr).
+ *
+ * Ikkalasini ham to‘liq nusxalab, faqat qo'shtirnoqlar ichidagi matnni almashtiring.
+ * Authentication → URL Configuration: Redirect URL (Vercel yoki lokal index.html).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
+// ↓ Supabase Dashboard → Settings → API dan nusxalang (placeholderlarni o‘chirib yozing)
 const SUPABASE_URL = "SIZNING_SUPABASE_URL_SHU_YERGA";
 const SUPABASE_ANON_KEY = "SIZNING_SUPABASE_ANON_KEY_SHU_YERGA";
 
