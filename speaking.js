@@ -74,6 +74,10 @@
     setBarAndValue("pron-bar", "pron-value", scores.pronunciation);
     setBarAndValue("vocab-bar", "vocab-value", scores.vocabulary);
     setBarAndValue("inton-bar", "inton-value", scores.intonation);
+
+    if (scores.fluency != null && isFinite(scores.fluency)) {
+      setBarAndValue("bar-fluency", "score-fluency", Math.round(scores.fluency));
+    }
   }
 
   /** IELTS band (0–9) → progress foizi */
@@ -88,9 +92,82 @@
 
   /** Task 1.1 — ketma-ket 3 savol uchun har bir javob balli (o‘rtacha hisoblash). */
   var task11PerQuestionScores = [];
+  /** Har bir savoldagi to‘xtalishlar soni (jami → Fluency). */
+  var task11HesitationCounts = [];
+
+  function countHesitations(text) {
+    var s = String(text || "");
+    var fillerRe = /\b(uh|um|ah|er|hmm|uhh|umm)\b/gi;
+    var fillerMatch = s.match(fillerRe);
+    var fillerCount = fillerMatch ? fillerMatch.length : 0;
+    var ellipsisMatch = s.match(/\.\.\./g);
+    var ellipsisCount = ellipsisMatch ? ellipsisMatch.length : 0;
+    var spaceRuns = s.match(/\s{2,}/g);
+    var spacePauseCount = spaceRuns ? spaceRuns.length : 0;
+    return fillerCount + ellipsisCount + spacePauseCount;
+  }
+
+  function clearTranscriptContainer() {
+    var el = $("transcript-container");
+    if (el) el.replaceChildren();
+  }
+
+  function appendTask11TranscriptBlock(questionNum, transcript, hesitationCount) {
+    var container = $("transcript-container");
+    if (!container) return;
+    var wrap = document.createElement("div");
+    wrap.className = "speaking-transcript-block";
+    var title = document.createElement("p");
+    title.className = "speaking-transcript-q";
+    title.textContent = "Savol " + questionNum + ":";
+    var body = document.createElement("p");
+    body.className = "speaking-transcript-text";
+    body.textContent = String(transcript || "").trim() || "(Matn yo‘q)";
+    var hes = document.createElement("p");
+    hes.className = "speaking-transcript-hes";
+    var h = typeof hesitationCount === "number" && isFinite(hesitationCount) ? Math.max(0, Math.round(hesitationCount)) : 0;
+    hes.textContent = "Hesitations found: " + h + " times";
+    wrap.appendChild(title);
+    wrap.appendChild(body);
+    wrap.appendChild(hes);
+    container.appendChild(wrap);
+    task11HesitationCounts.push(h);
+  }
+
+  function getTask11TotalHesitations() {
+    return task11HesitationCounts.reduce(function (a, b) {
+      return a + (typeof b === "number" && isFinite(b) ? b : 0);
+    }, 0);
+  }
+
+  /**
+   * O‘rtacha intonation asosida fluency: jami to‘xtalish qancha ko‘p bo‘lsa, ball shuncha past.
+   */
+  function computeFluencyFromHesitations(baseIntonationPercent, totalHesitations) {
+    var base = typeof baseIntonationPercent === "number" && isFinite(baseIntonationPercent) ? baseIntonationPercent : 70;
+    var th = typeof totalHesitations === "number" && isFinite(totalHesitations) ? Math.max(0, totalHesitations) : 0;
+    var penalty = Math.round(th * 4.5);
+    return Math.max(35, Math.min(98, Math.round(base - penalty)));
+  }
+
+  function getTask11SummaryWithFluency() {
+    var avg = getTask11AverageMapped();
+    if (!avg) return null;
+    var totalH = getTask11TotalHesitations();
+    var fluency = computeFluencyFromHesitations(avg.into, totalH);
+    return {
+      pron: avg.pron,
+      into: avg.into,
+      vocab: avg.vocab,
+      fluency: fluency,
+      totalHesitations: totalH,
+    };
+  }
 
   function resetTask11SequentialScores() {
     task11PerQuestionScores = [];
+    task11HesitationCounts = [];
+    clearTranscriptContainer();
   }
 
   function recordTask11QuestionScore(mapped) {
@@ -295,11 +372,15 @@
   }
 
   function applyScoresToDom(scores) {
-    updateUI({
+    var o = {
       pronunciation: scores.pron,
       vocabulary: scores.vocab,
       intonation: scores.into,
-    });
+    };
+    if (scores.fluency != null && isFinite(scores.fluency)) {
+      o.fluency = scores.fluency;
+    }
+    updateUI(o);
   }
 
   function setMicStatus(text) {
@@ -323,6 +404,12 @@
     recordTask11QuestionScore: recordTask11QuestionScore,
     getTask11AverageMapped: getTask11AverageMapped,
     resetTask11SequentialScores: resetTask11SequentialScores,
+    countHesitations: countHesitations,
+    clearTranscriptContainer: clearTranscriptContainer,
+    appendTask11TranscriptBlock: appendTask11TranscriptBlock,
+    getTask11TotalHesitations: getTask11TotalHesitations,
+    getTask11SummaryWithFluency: getTask11SummaryWithFluency,
+    computeFluencyFromHesitations: computeFluencyFromHesitations,
   };
 
   if (!SR) {

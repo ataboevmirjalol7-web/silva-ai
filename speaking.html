@@ -231,6 +231,43 @@
           transform: translateX(3px);
         }
       }
+      .speaking-transcript-stack {
+        text-align: left;
+      }
+      .speaking-transcript-block {
+        border-radius: 1rem;
+        border: 1px solid rgba(34, 211, 238, 0.45);
+        background: linear-gradient(
+          145deg,
+          rgba(6, 78, 59, 0.35) 0%,
+          rgba(15, 23, 42, 0.75) 45%,
+          rgba(76, 29, 149, 0.35) 100%
+        );
+        box-shadow:
+          0 0 24px rgba(34, 211, 238, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        padding: 1rem 1.15rem;
+      }
+      .speaking-transcript-block .speaking-transcript-q {
+        font-size: 0.6875rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(167, 243, 208, 0.95);
+        margin-bottom: 0.5rem;
+      }
+      .speaking-transcript-block .speaking-transcript-text {
+        font-size: 0.9375rem;
+        line-height: 1.55;
+        color: rgba(240, 253, 250, 0.96);
+        word-break: break-word;
+      }
+      .speaking-transcript-block .speaking-transcript-hes {
+        margin-top: 0.65rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: rgba(251, 191, 36, 0.92);
+      }
       #countdown-wrap:not(.is-recording) .countdown-pulse {
         animation: none;
         opacity: 0.85;
@@ -562,6 +599,9 @@
         >
           <h2 class="text-lg font-bold text-white sm:text-xl">Natijalar</h2>
           <p class="mt-1 text-xs text-purple-200/55">Namuna baholari (UI demo). Keyinchalik API bilan almashtiriladi.</p>
+
+          <div id="transcript-container" class="speaking-transcript-stack mt-5 space-y-4" aria-live="polite"></div>
+
           <p
             id="speaking-overall-band"
             class="is-hidden mt-3 rounded-lg border border-amber-400/25 bg-amber-500/10 px-3 py-2 text-sm leading-relaxed text-amber-100/95"
@@ -590,6 +630,18 @@
                 <div
                   id="bar-into"
                   class="metric-fill h-full w-0 rounded-full bg-gradient-to-r from-fuchsia-600 to-fuchsia-400"
+                ></div>
+              </div>
+            </div>
+            <div class="result-row">
+              <div class="mb-1.5 flex justify-between text-sm">
+                <span class="font-medium text-emerald-100/95">Fluency</span>
+                <span id="score-fluency" class="tabular-nums text-purple-200/80">—</span>
+              </div>
+              <div class="h-2.5 overflow-hidden rounded-full border border-white/10 bg-black/35">
+                <div
+                  id="bar-fluency"
+                  class="metric-fill h-full w-0 rounded-full bg-gradient-to-r from-emerald-500 to-teal-300"
                 ></div>
               </div>
             </div>
@@ -941,9 +993,11 @@
         const resetBtn = document.getElementById("reset-btn");
         const barPron = document.getElementById("bar-pron");
         const barInto = document.getElementById("bar-into");
+        const barFluency = document.getElementById("bar-fluency");
         const barVocab = document.getElementById("bar-vocab");
         const scorePron = document.getElementById("score-pron");
         const scoreInto = document.getElementById("score-into");
+        const scoreFluency = document.getElementById("score-fluency");
         const scoreVocab = document.getElementById("score-vocab");
         const micStatus = document.getElementById("mic-status");
         const countdownWrap = document.getElementById("countdown-wrap");
@@ -1039,6 +1093,11 @@
             if (g) mapped = g;
           }
 
+          if (part === "p11" && SilvaSpeakingMic.countHesitations && SilvaSpeakingMic.appendTask11TranscriptBlock) {
+            var hesCount = SilvaSpeakingMic.countHesitations(transcript);
+            SilvaSpeakingMic.appendTask11TranscriptBlock(idx + 1, transcript, hesCount);
+          }
+
           if (mapped && window.SilvaSpeakingMic && typeof SilvaSpeakingMic.applyScoresToDom === "function") {
             SilvaSpeakingMic.applyScoresToDom(mapped);
           }
@@ -1085,20 +1144,24 @@
           clearCountdown();
           setRecordingCountdownUi(false);
 
-          if (part === "p11" && SilvaSpeakingMic.getTask11AverageMapped) {
-            var avg = SilvaSpeakingMic.getTask11AverageMapped();
-            if (avg) {
-              SilvaSpeakingMic.applyScoresToDom(avg);
+          if (part === "p11" && SilvaSpeakingMic.getTask11SummaryWithFluency) {
+            var sum = SilvaSpeakingMic.getTask11SummaryWithFluency();
+            if (sum) {
+              SilvaSpeakingMic.applyScoresToDom(sum);
               var ban = document.getElementById("task11-average-banner");
               if (ban) {
                 ban.textContent =
                   "Task 1.1 yakuniy o‘rtacha: Pronunciation " +
-                  avg.pron +
+                  sum.pron +
                   "% · Intonation " +
-                  avg.into +
+                  sum.into +
                   "% · Vocabulary " +
-                  avg.vocab +
-                  "%";
+                  sum.vocab +
+                  "% · Fluency " +
+                  sum.fluency +
+                  "% (to‘xtalishlar jami: " +
+                  sum.totalHesitations +
+                  ")";
                 ban.classList.remove("is-hidden");
               }
             }
@@ -1443,9 +1506,11 @@
           if (opts.skipBars) return;
           barPron.style.width = "0%";
           barInto.style.width = "0%";
+          if (barFluency) barFluency.style.width = "0%";
           barVocab.style.width = "0%";
           scorePron.textContent = "0%";
           scoreInto.textContent = "0%";
+          if (scoreFluency) scoreFluency.textContent = "—";
           scoreVocab.textContent = "0%";
           requestAnimationFrame(() => {
             barPron.style.width = scores.pron + "%";
@@ -1454,6 +1519,10 @@
             scorePron.textContent = scores.pron + "%";
             scoreInto.textContent = scores.into + "%";
             scoreVocab.textContent = scores.vocab + "%";
+            if (scores.fluency != null && isFinite(scores.fluency) && barFluency && scoreFluency) {
+              barFluency.style.width = scores.fluency + "%";
+              scoreFluency.textContent = scores.fluency + "%";
+            }
           });
         }
 
