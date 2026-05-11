@@ -473,6 +473,7 @@
             <span class="inline-block h-2 w-2 animate-pulse rounded-full bg-red-400 align-middle shadow-[0_0_10px_#f87171]"></span>
             Yozilmoqda… tugmani bosib to‘xtating
           </p>
+          <p id="mic-status" class="mt-2 min-h-[1.25rem] text-center text-xs font-medium text-cyan-200/90" aria-live="polite"></p>
         </div>
 
         <!-- Tahlil -->
@@ -563,6 +564,7 @@
     </div>
 
     <script src="questions.js"></script>
+    <script src="speaking.js"></script>
     <script>
       (function () {
         document.getElementById("year").textContent = new Date().getFullYear();
@@ -860,6 +862,7 @@
         const scorePron = document.getElementById("score-pron");
         const scoreInto = document.getElementById("score-into");
         const scoreVocab = document.getElementById("score-vocab");
+        const micStatus = document.getElementById("mic-status");
         const countdownWrap = document.getElementById("countdown-wrap");
         const countdownDisplay = document.getElementById("countdown-display");
         const countdownCaption = document.getElementById("countdown-caption");
@@ -867,6 +870,68 @@
         const panels = document.querySelectorAll(".part-panel");
 
         const PART_LIMIT_SEC = { p11: 30, p12: 30, p2: 120, p3: 120 };
+
+        const useSpeechMic = window.SilvaSpeakingMic && SilvaSpeakingMic.supported;
+
+        function startSpeechRecording() {
+          if (!useSpeechMic) return;
+          SilvaSpeakingMic.start();
+          recording = true;
+          micBtn.setAttribute("aria-pressed", "true");
+          micBtn.classList.add("is-recording");
+          hintIdle.classList.add("is-hidden");
+          hintRec.classList.remove("is-hidden");
+          vizWrap.classList.add("is-hidden");
+          vizWrap.setAttribute("aria-hidden", "true");
+        }
+
+        function stopSpeechRecordingForAnalysis() {
+          if (!useSpeechMic) return;
+          SilvaSpeakingMic.stop();
+        }
+
+        if (useSpeechMic) {
+          SilvaSpeakingMic.configure({
+            onRecordingState(isRec) {
+              if (!isRec) recording = false;
+            },
+            onScores(scores, transcript) {
+              console.log("Siz aytdingiz:", transcript);
+              recording = false;
+              sessionFinalizeLock = false;
+              clearCountdown();
+              setRecordingCountdownUi(false);
+              micBtn.setAttribute("aria-pressed", "false");
+              micBtn.classList.remove("is-recording");
+              hintIdle.classList.remove("is-hidden");
+              hintRec.classList.add("is-hidden");
+              if (micStatus) micStatus.textContent = "";
+              analyzingBlock.classList.remove("is-hidden");
+              resultsBlock.classList.add("is-hidden");
+              micBtn.disabled = true;
+              micBtn.classList.add("opacity-45", "pointer-events-none");
+              runAnalyzeProgress(1600, () => {
+                analyzingBlock.classList.add("is-hidden");
+                analyzeBar.style.width = "0%";
+                showResults(scores);
+                micBtn.disabled = false;
+                micBtn.classList.remove("opacity-45", "pointer-events-none");
+              });
+            },
+            onError(err) {
+              showError(String(err && err.message ? err.message : err || "Speech API xatosi"));
+              recording = false;
+              sessionFinalizeLock = false;
+              clearCountdown();
+              setRecordingCountdownUi(false);
+              micBtn.setAttribute("aria-pressed", "false");
+              micBtn.classList.remove("is-recording");
+              hintIdle.classList.remove("is-hidden");
+              hintRec.classList.add("is-hidden");
+              if (micStatus) micStatus.textContent = "";
+            },
+          });
+        }
 
         let audioCtx = null;
         let analyser = null;
@@ -1170,11 +1235,39 @@
         }
 
         async function finishRecordingAfterTimer() {
+          if (useSpeechMic && recording) {
+            stopSpeechRecordingForAnalysis();
+            return;
+          }
           await finalizeRecordingSession();
         }
 
         micBtn.addEventListener("click", async () => {
           if (analyzeProgressTimer != null) return;
+
+          if (useSpeechMic) {
+            if (!recording) {
+              try {
+                hideError();
+                startSpeechRecording();
+                setRecordingCountdownUi(true);
+                startCountdownFromRecording();
+              } catch (e) {
+                showError("Nutqni eshitishni boshlashda xatolik.");
+                clearCountdown();
+                setRecordingCountdownUi(false);
+                recording = false;
+                micBtn.setAttribute("aria-pressed", "false");
+                micBtn.classList.remove("is-recording");
+                hintIdle.classList.remove("is-hidden");
+                hintRec.classList.add("is-hidden");
+                if (micStatus) micStatus.textContent = "";
+              }
+              return;
+            }
+            stopSpeechRecordingForAnalysis();
+            return;
+          }
 
           if (!recording) {
             try {
@@ -1200,6 +1293,9 @@
         });
 
         resetBtn.addEventListener("click", () => {
+          if (useSpeechMic && recording) {
+            SilvaSpeakingMic.abort();
+          }
           if (analyzeProgressTimer != null) clearTimeout(analyzeProgressTimer);
           analyzeProgressTimer = null;
           clearCountdown();
