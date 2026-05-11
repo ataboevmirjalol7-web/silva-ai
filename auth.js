@@ -95,7 +95,16 @@ function initAuthSession() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  var btn = document.getElementById("btn-google-login");
-  if (btn) btn.addEventListener("click", loginWithGoogle);
   initAuthSession();
+});
+
+// auth.js oxiriga qo'shilgan — Google login tugmasi
+document.addEventListener("DOMContentLoaded", () => {
+  const loginBtn = document.getElementById("google-login-btn");
+  if (loginBtn) {
+    loginBtn.addEventListener("click", async () => {
+      console.log("Login tugmasi bosildi...");
+      await loginWithGoogle();
+    });
+  }
 });
