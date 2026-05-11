@@ -97,6 +97,56 @@
         flex-shrink: 0;
         display: block;
       }
+      .hero-content {
+        max-width: 36rem;
+      }
+      .hero-content .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.35rem 1rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: rgba(103, 232, 249, 0.95);
+        backdrop-filter: blur(12px);
+      }
+      .hero-content h1 {
+        margin-top: 1rem;
+        font-size: clamp(2.25rem, 5vw, 3.75rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        background: linear-gradient(to right, #e879f9, #c4b5fd, #22d3ee);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .hero-content .founded-by {
+        margin-top: 1rem;
+        font-size: 0.9375rem;
+        line-height: 1.5;
+        color: rgba(226, 232, 240, 0.88);
+      }
+      .hero-content .founded-by b {
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.95);
+      }
+      .hero-content .researcher-info {
+        margin-top: 0.25rem;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        color: rgba(167, 139, 250, 0.95);
+      }
+      .hero-content .description {
+        margin-top: 1rem;
+        font-size: 1.0625rem;
+        line-height: 1.55;
+        color: rgba(148, 163, 184, 0.95);
+      }
     </style>
   </head>
   <body class="mesh-bg min-h-screen text-slate-100 antialiased selection:bg-fuchsia-500/30 selection:text-white">
@@ -118,20 +168,15 @@
       <!-- Header -->
       <header class="mb-12 flex flex-col items-center justify-between gap-6 sm:flex-row sm:items-start">
         <div class="text-center sm:text-left">
-          <div
-            class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-cyan-300/90 backdrop-blur-md"
-          >
-            <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></span>
-            AI yordamchi platformasi
+          <div class="hero-content">
+            <div class="badge">● AI yordamchi platformasi</div>
+            <h1>Silva AI</h1>
+
+            <p class="founded-by">Founded by <b>Khujaniyozova Nargiza Qodamboyevna</b></p>
+            <p class="researcher-info">PhD researcher at UzSWLU</p>
+
+            <p class="description">Yozish tahlili va nutq murabbiyligi — bitta joyda, zamonaviy AI bilan.</p>
           </div>
-          <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            <span class="bg-gradient-to-r from-fuchsia-400 via-violet-300 to-cyan-400 bg-clip-text text-transparent">
-              Silva AI
-            </span>
-          </h1>
-          <p class="mt-3 max-w-xl text-lg text-slate-400">
-            Yozish tahlili va nutq murabbiyligi — bitta joyda, zamonaviy AI bilan.
-          </p>
         </div>
         <nav
           class="flex shrink-0 gap-2 rounded-2xl border border-white/10 bg-white/5 p-1.5 backdrop-blur-xl shadow-glass"
