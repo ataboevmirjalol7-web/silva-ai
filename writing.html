@@ -133,6 +133,60 @@
         color: #fff !important;
         box-shadow: 0 0 20px rgba(168, 85, 247, 0.35);
       }
+      .writing-stepper-line {
+        flex: 1;
+        height: 3px;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.1);
+        transition: background 0.35s ease;
+      }
+      .writing-stepper-line.is-done {
+        background: linear-gradient(90deg, rgba(232, 121, 249, 0.85), rgba(34, 211, 238, 0.75));
+      }
+      .writing-step-node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.35rem;
+      }
+      .writing-step-circle {
+        display: flex;
+        height: 2.25rem;
+        width: 2.25rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        border: 2px solid rgba(255, 255, 255, 0.18);
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: rgba(233, 212, 255, 0.45);
+        background: rgba(0, 0, 0, 0.35);
+        transition: border-color 0.25s, color 0.25s, box-shadow 0.25s, background 0.25s;
+      }
+      .writing-step-node.is-current .writing-step-circle {
+        border-color: rgba(232, 121, 249, 0.75);
+        color: #fff;
+        background: rgba(168, 85, 247, 0.28);
+        box-shadow: 0 0 22px rgba(168, 85, 247, 0.45);
+      }
+      .writing-step-node.is-done .writing-step-circle {
+        border-color: rgba(34, 211, 238, 0.55);
+        color: rgba(167, 243, 208, 0.95);
+        background: rgba(34, 211, 238, 0.12);
+      }
+      .writing-step-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(233, 212, 255, 0.4);
+      }
+      .writing-step-node.is-current .writing-step-label {
+        color: rgba(253, 244, 255, 0.92);
+      }
+      .writing-step-node.is-done .writing-step-label {
+        color: rgba(34, 211, 238, 0.75);
+      }
     </style>
   </head>
   <body class="mesh-bg min-h-screen antialiased text-white selection:bg-fuchsia-500/35 selection:text-white">
@@ -184,21 +238,30 @@
         </nav>
       </header>
 
-      <!-- Task tanlash -->
+      <!-- Step-by-step progress -->
       <div
-        class="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.05] p-2 backdrop-blur-xl sm:gap-3 sm:p-2.5"
-        role="tablist"
-        aria-label="Writing topshirig‘i"
+        id="writing-stepper"
+        class="mb-8 rounded-2xl border border-white/12 bg-white/[0.05] p-5 backdrop-blur-xl sm:p-6"
+        aria-label="Writing test bosqichlari"
       >
-        <button type="button" class="task-tab task-tab-active" data-task="task11" id="tab-task11" role="tab" aria-selected="true">
-          Task 1.1
-        </button>
-        <button type="button" class="task-tab" data-task="task12" id="tab-task12" role="tab" aria-selected="false">
-          Task 1.2
-        </button>
-        <button type="button" class="task-tab" data-task="part2" id="tab-part2" role="tab" aria-selected="false">
-          Part 2
-        </button>
+        <p class="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-fuchsia-300/85">Full test</p>
+        <p class="mt-1 text-center text-xs text-purple-200/55">1 → 2 → 3: ketma-ket barcha topshiriqlar</p>
+        <div class="mx-auto mt-6 flex max-w-xl items-center gap-2 sm:gap-3">
+          <div class="writing-step-node is-current" data-writing-step="1.1">
+            <div class="writing-step-circle">1</div>
+            <span class="writing-step-label">Task 1.1</span>
+          </div>
+          <div class="writing-stepper-line" id="writing-step-line-1" aria-hidden="true"></div>
+          <div class="writing-step-node" data-writing-step="1.2">
+            <div class="writing-step-circle">2</div>
+            <span class="writing-step-label">Task 1.2</span>
+          </div>
+          <div class="writing-stepper-line" id="writing-step-line-2" aria-hidden="true"></div>
+          <div class="writing-step-node" data-writing-step="2">
+            <div class="writing-step-circle">3</div>
+            <span class="writing-step-label">Part 2</span>
+          </div>
+        </div>
       </div>
 
       <!-- Ikki ustun -->
@@ -275,7 +338,7 @@
             class="min-h-[320px] w-full resize-y rounded-2xl border border-white/12 bg-black/35 px-5 py-4 text-[15px] leading-relaxed text-white placeholder:text-purple-300/35 focus:border-fuchsia-400/50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/25"
           ></textarea>
 
-          <div class="relative mt-6" id="check-btn-wrap">
+          <div class="relative mt-6 hidden" id="check-btn-wrap">
             <button
               type="button"
               id="check-btn"
@@ -292,7 +355,7 @@
                   d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.847a4.5 4.5 0 003.09 3.09L15.75 12l-2.847.813a4.5 4.5 0 00-3.09 3.09z"
                 />
               </svg>
-              <span class="relative">Analyze</span>
+              <span class="relative" id="check-btn-label">Analyze Full Test</span>
             </button>
             <button
               type="button"
@@ -303,6 +366,14 @@
               title=""
             ></button>
           </div>
+
+          <button
+            type="button"
+            id="next-step-btn"
+            class="mt-4 hidden w-full rounded-2xl border border-cyan-400/40 bg-cyan-500/15 py-3.5 text-sm font-bold tracking-wide text-cyan-100 shadow-[0_0_24px_-8px_rgba(34,211,238,0.45)] transition hover:border-cyan-300/55 hover:bg-cyan-500/22 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next
+          </button>
         </section>
 
         <!-- O‘ng: tahlil -->

@@ -1,15 +1,16 @@
 /**
- * writing.html — Topic: questions.js dan tasodifiy; Analyze: POST /api/check-writing (Groq).
+ * writing.html — Step-by-step full test (1.1 → 1.2 → Part 2); Analyze: POST /api/check-writing.
  */
 (function () {
   const API_ANALYZE = "/api/check-writing";
 
-  /** Joriy topshirig‘ (task tab) bo‘yicha minimal so‘z soni — API bilan bir xil saqlang. */
   const MIN_WORDS_BY_TASK = {
     task11: 45,
     task12: 110,
     part2: 170,
   };
+
+  /** @typedef {'1.1' | '1.2' | '2'} WritingStep */
 
   function countWords(text) {
     const t = text.trim();
@@ -108,15 +109,31 @@
     return pick;
   }
 
+  /** @param {WritingStep} step */
+  function stepToTaskKey(step) {
+    if (step === "1.1") return "task11";
+    if (step === "1.2") return "task12";
+    return "part2";
+  }
+
   function initWritingPage() {
     const essay = document.getElementById("essay");
     const checkBtn = document.getElementById("check-btn");
+    const checkBtnWrap = document.getElementById("check-btn-wrap");
+    const checkBtnLabel = document.getElementById("check-btn-label");
+    const nextStepBtn = document.getElementById("next-step-btn");
     if (!essay || !checkBtn) return;
 
-    /** @type {string} */
-    let currentTopic = "";
+    /** @type {WritingStep} */
+    let currentStep = "1.1";
     /** @type {'task11' | 'task12' | 'part2'} */
     let selectedTask = "task11";
+
+    let currentTopic = "";
+    let savedEssay11 = "";
+    let savedTopic11 = "";
+    let savedEssay12 = "";
+    let savedTopic12 = "";
 
     const wordCountEl = document.getElementById("word-count");
     const topicLoading = document.getElementById("topic-loading");
@@ -127,9 +144,9 @@
     const topicContextEl = document.getElementById("topic-context");
     const topicError = document.getElementById("topic-error");
     const refreshTopicBtn = document.getElementById("refresh-topic-btn");
-    const tabTask11 = document.getElementById("tab-task11");
-    const tabTask12 = document.getElementById("tab-task12");
-    const tabPart2 = document.getElementById("tab-part2");
+    const stepperRoot = document.getElementById("writing-stepper");
+    const stepLine1 = document.getElementById("writing-step-line-1");
+    const stepLine2 = document.getElementById("writing-step-line-2");
 
     const emptyState = document.getElementById("empty-state");
     const loadingOverlay = document.getElementById("loading-overlay");
@@ -151,7 +168,6 @@
 
     if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
-    /** @type {boolean} */
     let analyzeBusy = false;
 
     function getMinWordsForTask(task) {
@@ -159,21 +175,70 @@
       return typeof m === "number" ? m : MIN_WORDS_BY_TASK.task11;
     }
 
-    function isEssayValid() {
+    function isCurrentEssayValid() {
       return countWords(essay.value) >= getMinWordsForTask(selectedTask);
     }
 
-    function syncAnalyzeControls() {
-      var wordsOk = isEssayValid();
-      var canSubmit = wordsOk && !analyzeBusy;
-      checkBtn.disabled = !canSubmit;
-      if (checkBtnBlocker) {
-        checkBtnBlocker.classList.toggle("hidden", wordsOk || analyzeBusy);
+    function canGoNextFromStep() {
+      if (currentStep === "1.1") return countWords(essay.value) >= MIN_WORDS_BY_TASK.task11;
+      if (currentStep === "1.2") return countWords(essay.value) >= MIN_WORDS_BY_TASK.task12;
+      return false;
+    }
+
+    function updateStepperVisual() {
+      if (!stepperRoot) return;
+      var order = /** @type {WritingStep[]} */ (["1.1", "1.2", "2"]);
+      var idx = order.indexOf(currentStep);
+      if (idx < 0) idx = 0;
+      stepperRoot.querySelectorAll("[data-writing-step]").forEach(function (el) {
+        var s = /** @type {HTMLElement} */ (el).getAttribute("data-writing-step");
+        var i = order.indexOf(/** @type {WritingStep} */ (s));
+        el.classList.remove("is-current", "is-done");
+        if (i < idx) el.classList.add("is-done");
+        else if (i === idx) el.classList.add("is-current");
+      });
+      if (stepLine1) {
+        stepLine1.classList.toggle("is-done", idx >= 1);
       }
+      if (stepLine2) {
+        stepLine2.classList.toggle("is-done", idx >= 2);
+      }
+    }
+
+    function syncAnalyzeControls() {
+      selectedTask = stepToTaskKey(currentStep);
+      updateStepperVisual();
+
+      var onPart2 = currentStep === "2";
+      var wordsOkAnalyze = onPart2 && isCurrentEssayValid();
+      var canSubmit = wordsOkAnalyze && !analyzeBusy;
+
+      if (checkBtnWrap) {
+        checkBtnWrap.classList.toggle("hidden", !onPart2);
+      }
+      checkBtn.disabled = !canSubmit;
+      if (checkBtnLabel) {
+        checkBtnLabel.textContent = "Analyze Full Test";
+      }
+      if (checkBtnBlocker) {
+        checkBtnBlocker.classList.toggle("hidden", !onPart2 || wordsOkAnalyze || analyzeBusy);
+      }
+
+      if (nextStepBtn) {
+        var showNext = !onPart2 && canGoNextFromStep() && !analyzeBusy;
+        nextStepBtn.classList.toggle("hidden", !showNext);
+        if (currentStep === "1.1") {
+          nextStepBtn.textContent = "Next: Task 1.2";
+        } else if (currentStep === "1.2") {
+          nextStepBtn.textContent = "Next: Part 2";
+        }
+        nextStepBtn.disabled = !canGoNextFromStep() || analyzeBusy;
+      }
+
       if (minWordsHint) {
         var min = getMinWordsForTask(selectedTask);
         minWordsHint.textContent =
-          "Minimum · " + min + " so‘z · " + taskTypeLabel(selectedTask);
+          "Minimum · " + min + " so‘z · " + taskTypeLabel(selectedTask) + " (bosqich " + currentStep + ")";
       }
     }
 
@@ -182,6 +247,7 @@
       wordCountEl.textContent = String(countWords(essay.value));
       syncAnalyzeControls();
     }
+
     updateWordCount();
     essay.addEventListener("input", updateWordCount);
 
@@ -189,16 +255,6 @@
       checkBtnBlocker.addEventListener("click", function (e) {
         e.preventDefault();
         window.alert("Iltimos, avval vazifani to'liq bajaring.");
-      });
-    }
-
-    function setActiveTaskTab(mode) {
-      const tabs = [tabTask11, tabTask12, tabPart2].filter(Boolean);
-      tabs.forEach(function (btn) {
-        if (!btn) return;
-        const isSel = btn.getAttribute("data-task") === mode;
-        btn.classList.toggle("task-tab-active", isSel);
-        btn.setAttribute("aria-selected", isSel ? "true" : "false");
       });
     }
 
@@ -223,6 +279,8 @@
       setTopicLoadingVisible(false);
       setTopicContentVisible(false);
 
+      selectedTask = stepToTaskKey(currentStep);
+
       const bank =
         typeof window !== "undefined" && window.LIVA_WRITING_QUESTIONS
           ? window.LIVA_WRITING_QUESTIONS
@@ -241,7 +299,13 @@
         return;
       }
 
-      var picked = pickRandomItem(list, bank, selectedTask, currentTopic);
+      var avoid =
+        selectedTask === "task11"
+          ? savedTopic11
+          : selectedTask === "task12"
+            ? savedTopic12
+            : currentTopic || "";
+      var picked = pickRandomItem(list, bank, selectedTask, avoid);
       if (picked == null) {
         currentTopic = "";
         syncAnalyzeControls();
@@ -277,19 +341,55 @@
       syncAnalyzeControls();
     }
 
-    function onTabClick(mode) {
-      if (mode !== "task11" && mode !== "task12" && mode !== "part2") return;
-      selectedTask = mode;
-      setActiveTaskTab(mode);
-      loadTopic();
+    function buildFullTestPayload() {
+      var part2Text = essay.value.trim();
+      var bundle =
+        "=== Task 1.1 ===\nWRITING TASK:\n" +
+        savedTopic11 +
+        "\n\nCANDIDATE RESPONSE:\n" +
+        savedEssay11 +
+        "\n\n──────────\n\n=== Task 1.2 ===\nWRITING TASK:\n" +
+        savedTopic12 +
+        "\n\nCANDIDATE RESPONSE:\n" +
+        savedEssay12 +
+        "\n\n──────────\n\n=== Part 2 ===\nWRITING TASK:\n" +
+        currentTopic +
+        "\n\nCANDIDATE RESPONSE:\n" +
+        part2Text;
+      var metaTopic =
+        "FULL IELTS WRITING PRACTICE TEST (3 parts in sequence). " +
+        "The candidate completed Task 1.1, Task 1.2, and Part 2. " +
+        "Evaluate each part against its stated task, then give concise overall feedback in Uzbek (Latin). " +
+        "The candidate's three responses are bundled below with clear section headers.";
+      return { essay: bundle, topic: metaTopic, task: "part2" };
     }
 
-    if (tabTask11) tabTask11.addEventListener("click", function () { onTabClick("task11"); });
-    if (tabTask12) tabTask12.addEventListener("click", function () { onTabClick("task12"); });
-    if (tabPart2) tabPart2.addEventListener("click", function () { onTabClick("part2"); });
+    if (nextStepBtn) {
+      nextStepBtn.addEventListener("click", function () {
+        if (analyzeBusy) return;
+        if (!canGoNextFromStep()) {
+          window.alert("Iltimos, avval vazifani to'liq bajaring.");
+          return;
+        }
+        if (currentStep === "1.1") {
+          savedEssay11 = essay.value.trim();
+          savedTopic11 = currentTopic;
+          currentStep = "1.2";
+          essay.value = savedEssay12;
+          loadTopic();
+        } else if (currentStep === "1.2") {
+          savedEssay12 = essay.value.trim();
+          savedTopic12 = currentTopic;
+          currentStep = "2";
+          essay.value = "";
+          currentTopic = "";
+          loadTopic();
+        }
+        essay.focus();
+        updateWordCount();
+      });
+    }
 
-    setActiveTaskTab("task11");
-    loadTopic();
     if (refreshTopicBtn) {
       refreshTopicBtn.addEventListener("click", loadTopic);
     }
@@ -314,13 +414,12 @@
 
     checkBtn.addEventListener("click", function () {
       if (analyzeBusy) return;
-      if (!isEssayValid()) {
+      if (currentStep !== "2") return;
+      if (!isCurrentEssayValid()) {
         window.alert("Iltimos, avval vazifani to'liq bajaring.");
         essay.focus();
         return;
       }
-
-      const text = essay.value.trim();
 
       hideError();
       analyzeBusy = true;
@@ -329,11 +428,7 @@
       if (resultsContent) resultsContent.classList.add("is-hidden");
       setLoading(true);
 
-      const body = {
-        essay: text,
-        topic: currentTopic,
-        task: selectedTask,
-      };
+      var body = buildFullTestPayload();
 
       fetch(API_ANALYZE, {
         method: "POST",
@@ -382,6 +477,7 @@
         });
     });
 
+    loadTopic();
     syncAnalyzeControls();
   }
 
