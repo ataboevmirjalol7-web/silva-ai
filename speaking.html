@@ -200,6 +200,9 @@
           opacity: 0.65;
         }
       }
+      .speaking-q-visual img {
+        display: block;
+      }
     </style>
   </head>
   <body class="mesh-bg min-h-screen antialiased text-white selection:bg-fuchsia-500/35 selection:text-white">
@@ -270,161 +273,29 @@
           <!-- Part 1.1 -->
           <div id="panel-p11" class="part-panel rounded-2xl border border-white/12 bg-white/[0.05] p-5 backdrop-blur-xl sm:p-6" role="tabpanel" data-part="p11">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300/95">Part 1.1 · Personal Questions</p>
-            <p class="mt-1 text-xs text-purple-200/65">Tayyorgarlik yo‘q · har bir savol uchun 30 soniya</p>
-            <div class="mt-5 space-y-3" id="questions-p11">
-              <button type="button" class="question-card question-card-selected w-full" data-part="p11" data-q-index="0">
-                <span class="block text-[10px] font-semibold uppercase tracking-wider text-cyan-300/85">Online Shopping</span>
-                <span class="mt-1 block text-sm leading-snug text-white/92">Have you ever bought clothes online?</span>
-              </button>
-              <button type="button" class="question-card w-full" data-part="p11" data-q-index="1">
-                <span class="block text-[10px] font-semibold uppercase tracking-wider text-cyan-300/85">Colors</span>
-                <span class="mt-1 block text-sm leading-snug text-white/92">What is your favorite color?</span>
-              </button>
-              <button type="button" class="question-card w-full" data-part="p11" data-q-index="2">
-                <span class="block text-[10px] font-semibold uppercase tracking-wider text-cyan-300/85">Technology</span>
-                <span class="mt-1 block text-sm leading-snug text-white/92">Do you use computers?</span>
-              </button>
-            </div>
+            <p class="mt-1 text-xs text-purple-200/65">Tayyorgarlik yo‘q · har bir savol uchun 30 soniya · savollar: questions.js</p>
+            <div class="mt-5 space-y-4" id="inject-p11"></div>
           </div>
 
           <!-- Part 1.2 -->
           <div id="panel-p12" class="part-panel is-hidden rounded-2xl border border-white/12 bg-white/[0.05] p-5 backdrop-blur-xl sm:p-6" role="tabpanel" data-part="p12">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300/95">Part 1.2 · Picture Description</p>
-            <p class="mt-1 text-xs text-purple-200/65">Tayyorgarlik yo‘q · har bir savol uchun 30 soniya · rasmlar namuna (placeholder)</p>
-            <div class="mt-5 space-y-8">
-              <div>
-                <div class="mb-3 grid grid-cols-2 gap-2 sm:gap-3">
-                  <div class="overflow-hidden rounded-xl border border-white/10 bg-black/40">
-                    <img
-                      src="https://picsum.photos/seed/liva-office/400/260"
-                      width="400"
-                      height="260"
-                      alt="Ofisda ish — namuna rasm"
-                      class="h-28 w-full object-cover sm:h-32"
-                      loading="lazy"
-                    />
-                    <p class="border-t border-white/10 px-2 py-1 text-center text-[9px] text-purple-300/65">Office work</p>
-                  </div>
-                  <div class="overflow-hidden rounded-xl border border-white/10 bg-black/40">
-                    <img
-                      src="https://picsum.photos/seed/liva-home-child/400/260"
-                      width="400"
-                      height="260"
-                      alt="uyda bola bilan ish — namuna rasm"
-                      class="h-28 w-full object-cover sm:h-32"
-                      loading="lazy"
-                    />
-                    <p class="border-t border-white/10 px-2 py-1 text-center text-[9px] text-purple-300/65">Working from home with a child</p>
-                  </div>
-                </div>
-                <button type="button" class="question-card question-card-selected w-full" data-part="p12" data-q-index="0">
-                  <span class="block text-[10px] font-semibold uppercase tracking-wider text-cyan-300/85">Image Analysis</span>
-                  <span class="mt-1 block text-sm leading-snug text-white/92">What do you see in these pictures? (Comparing office work vs. working from home with a child).</span>
-                </button>
-              </div>
-              <div>
-                <div class="mb-3 grid grid-cols-2 gap-2 sm:gap-3">
-                  <div class="overflow-hidden rounded-xl border border-white/10 bg-black/40">
-                    <img
-                      src="https://picsum.photos/seed/liva-team-office/400/260"
-                      width="400"
-                      height="260"
-                      alt="jamoa ofisda — namuna rasm"
-                      class="h-28 w-full object-cover sm:h-32"
-                      loading="lazy"
-                    />
-                    <p class="border-t border-white/10 px-2 py-1 text-center text-[9px] text-purple-300/65">Team · office</p>
-                  </div>
-                  <div class="overflow-hidden rounded-xl border border-white/10 bg-black/40">
-                    <img
-                      src="https://picsum.photos/seed/liva-team-remote/400/260"
-                      width="400"
-                      height="260"
-                      alt="masofaviy jamoa — namuna rasm"
-                      class="h-28 w-full object-cover sm:h-32"
-                      loading="lazy"
-                    />
-                    <p class="border-t border-white/10 px-2 py-1 text-center text-[9px] text-purple-300/65">Team · remote</p>
-                  </div>
-                </div>
-                <button type="button" class="question-card w-full" data-part="p12" data-q-index="1">
-                  <span class="block text-[10px] font-semibold uppercase tracking-wider text-cyan-300/85">Opinion</span>
-                  <span class="mt-1 block text-sm leading-snug text-white/92">Which do you think is better for working in teams: working in an office or from home?</span>
-                </button>
-              </div>
-              <div>
-                <div class="mb-3 overflow-hidden rounded-xl border border-white/10 bg-black/40">
-                  <img
-                    src="https://picsum.photos/seed/liva-economy-office/800/280"
-                    width="800"
-                    height="280"
-                    alt="iqtisodiyot va biznes — namuna rasm"
-                    class="max-h-36 w-full object-cover sm:max-h-40"
-                    loading="lazy"
-                  />
-                  <p class="border-t border-white/10 px-3 py-1.5 text-center text-[9px] text-purple-300/65">Economics · placeholder</p>
-                </div>
-                <button type="button" class="question-card w-full" data-part="p12" data-q-index="2">
-                  <span class="block text-[10px] font-semibold uppercase tracking-wider text-cyan-300/85">Economics</span>
-                  <span class="mt-1 block text-sm leading-snug text-white/92">Do you think companies save money if employees work from home?</span>
-                </button>
-              </div>
-            </div>
+            <p class="mt-1 text-xs text-purple-200/65">Tayyorgarlik yo‘q · har bir savol uchun 30 soniya · rasmlar questions.js (imgUrl)</p>
+            <div class="mt-5 space-y-8" id="inject-p12"></div>
           </div>
 
           <!-- Part 2 -->
           <div id="panel-p2" class="part-panel is-hidden rounded-2xl border border-white/12 bg-white/[0.05] p-5 backdrop-blur-xl sm:p-6" role="tabpanel" data-part="p2">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300/95">Part 2 · Individual Long Turn</p>
             <p class="mt-1 text-xs text-purple-200/65">1 daqiqa tayyorgarlik · 2 daqiqa nutq · taymer nutq vaqtini ko‘rsatadi</p>
-            <div class="mt-5 overflow-hidden rounded-2xl border border-cyan-500/20 bg-black/35">
-              <img
-                src="https://picsum.photos/seed/liva-ambition-mountain/960/360"
-                width="960"
-                height="360"
-                alt="ambitsiya mavzusi — namuna rasm"
-                class="max-h-44 w-full object-cover sm:max-h-52"
-                loading="lazy"
-              />
-              <p class="border-t border-white/10 bg-black/40 px-3 py-2 text-center text-[10px] text-cyan-200/75">Topic · Ambition (placeholder)</p>
-            </div>
-            <div class="mt-5 rounded-xl border border-white/10 bg-black/25 p-4">
-              <p class="text-sm font-semibold text-white">Ambition</p>
-              <ul class="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-purple-100/88">
-                <li>Tell me about a time when you pursued an ambitious goal.</li>
-                <li>How did this experience change your understanding of ambition?</li>
-                <li>What impact does ambition have on people’s lives and society as a whole?</li>
-              </ul>
-            </div>
+            <div class="mt-5" id="inject-p2"></div>
           </div>
 
           <!-- Part 3 -->
           <div id="panel-p3" class="part-panel is-hidden rounded-2xl border border-white/12 bg-white/[0.05] p-5 backdrop-blur-xl sm:p-6" role="tabpanel" data-part="p3">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300/95">Part 3 · Discussion / Two-way Role Play</p>
             <p class="mt-1 text-xs text-purple-200/65">1 daqiqa tayyorgarlik · 2 daqiqa nutq · taymer nutq vaqtini ko‘rsatadi</p>
-            <div class="mt-5 rounded-xl border border-white/10 bg-black/25 p-4">
-              <p class="text-xs font-semibold uppercase tracking-wider text-cyan-300/85">Topic · Renewable Energy</p>
-              <p class="mt-3 text-sm font-medium leading-relaxed text-white/92">
-                Should countries invest more in renewable energy sources?
-              </p>
-              <div class="mt-5 grid gap-4 sm:grid-cols-2">
-                <div class="rounded-lg border border-emerald-500/25 bg-emerald-500/5 p-3">
-                  <p class="text-[10px] font-semibold uppercase tracking-wider text-emerald-300/90">Points for</p>
-                  <ul class="mt-2 list-disc space-y-1.5 pl-4 text-xs leading-relaxed text-purple-100/85">
-                    <li>Reduces dependence on fossil fuels</li>
-                    <li>Long-term economic benefits</li>
-                    <li>Cost-effective and efficient</li>
-                  </ul>
-                </div>
-                <div class="rounded-lg border border-rose-500/25 bg-rose-500/5 p-3">
-                  <p class="text-[10px] font-semibold uppercase tracking-wider text-rose-300/90">Points against</p>
-                  <ul class="mt-2 list-disc space-y-1.5 pl-4 text-xs leading-relaxed text-purple-100/85">
-                    <li>Expensive initial investment</li>
-                    <li>Weather-dependent and unreliable</li>
-                    <li>Challenging to transition without disrupting economies</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+            <div class="mt-5" id="inject-p3"></div>
           </div>
         </div>
 
@@ -581,9 +452,174 @@
       </footer>
     </div>
 
+    <script src="questions.js"></script>
     <script>
       (function () {
         document.getElementById("year").textContent = new Date().getFullYear();
+
+        function makeQuestionButton(part, index, item, selected) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "question-card w-full" + (selected ? " question-card-selected" : "");
+          btn.setAttribute("data-part", part);
+          btn.setAttribute("data-q-index", String(index));
+          var tag = document.createElement("span");
+          tag.className = "block text-[10px] font-semibold uppercase tracking-wider text-cyan-300/85";
+          tag.textContent = item.tag;
+          var q = document.createElement("span");
+          q.className = "mt-1 block text-sm leading-snug text-white/92";
+          q.textContent = item.question;
+          btn.appendChild(tag);
+          btn.appendChild(q);
+          return btn;
+        }
+
+        function makeQuestionImageBlock(url, altText) {
+          var wrap = document.createElement("div");
+          wrap.className =
+            "speaking-q-visual mb-4 overflow-hidden rounded-2xl border border-cyan-500/35 bg-gradient-to-b from-cyan-500/[0.14] via-black/35 to-black/55 shadow-[0_16px_56px_-20px_rgba(34,211,238,0.42)] ring-1 ring-inset ring-white/10";
+          var img = document.createElement("img");
+          img.src = url;
+          img.alt = altText || "";
+          img.className = "h-auto w-full max-h-52 object-cover object-center sm:max-h-60";
+          img.loading = "lazy";
+          img.decoding = "async";
+          wrap.appendChild(img);
+          return wrap;
+        }
+
+        function renderSpeakingUI() {
+          var SQ = window.LIVA_SPEAKING_QUESTIONS;
+          if (!SQ) return;
+
+          var p11 = document.getElementById("inject-p11");
+          var p12 = document.getElementById("inject-p12");
+          var p2 = document.getElementById("inject-p2");
+          var p3 = document.getElementById("inject-p3");
+          if (!p11 || !p12 || !p2 || !p3) return;
+
+          p11.replaceChildren();
+          (SQ.part11 || []).forEach(function (item, i) {
+            var block = document.createElement("div");
+            block.className = "speaking-q-block";
+            if (item.imgUrl) block.appendChild(makeQuestionImageBlock(item.imgUrl, item.tag));
+            block.appendChild(makeQuestionButton("p11", i, item, i === 0));
+            p11.appendChild(block);
+          });
+
+          p12.replaceChildren();
+          (SQ.part12 || []).forEach(function (item, i) {
+            var block = document.createElement("div");
+            block.className = "speaking-q-block";
+            if (item.imgUrl) block.appendChild(makeQuestionImageBlock(item.imgUrl, item.tag));
+            block.appendChild(makeQuestionButton("p12", i, item, i === 0));
+            p12.appendChild(block);
+          });
+
+          p2.replaceChildren();
+          var d2 = SQ.part2;
+          if (d2) {
+            if (d2.imgUrl) {
+              var shell = document.createElement("div");
+              shell.className =
+                "overflow-hidden rounded-2xl border border-cyan-500/25 bg-black/40 shadow-[0_14px_52px_-18px_rgba(168,85,247,0.38)] ring-1 ring-white/10";
+              var hero = document.createElement("img");
+              hero.src = d2.imgUrl;
+              hero.alt = d2.title || d2.caption || "";
+              hero.className = "max-h-48 w-full object-cover object-center sm:max-h-56";
+              hero.loading = "lazy";
+              hero.decoding = "async";
+              shell.appendChild(hero);
+              var cap = document.createElement("p");
+              cap.className = "border-t border-white/10 bg-black/45 px-3 py-2 text-center text-[10px] text-cyan-200/85";
+              cap.textContent = d2.caption || "";
+              shell.appendChild(cap);
+              p2.appendChild(shell);
+            }
+            var textCard = document.createElement("div");
+            textCard.className = "mt-5 rounded-xl border border-white/10 bg-black/25 p-4";
+            var title = document.createElement("p");
+            title.className = "text-sm font-semibold text-white";
+            title.textContent = d2.title || "";
+            textCard.appendChild(title);
+            var ul = document.createElement("ul");
+            ul.className = "mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-purple-100/88";
+            (d2.bullets || []).forEach(function (line) {
+              var li = document.createElement("li");
+              li.textContent = line;
+              ul.appendChild(li);
+            });
+            textCard.appendChild(ul);
+            p2.appendChild(textCard);
+          }
+
+          p3.replaceChildren();
+          var d3 = SQ.part3;
+          if (d3) {
+            var card = document.createElement("div");
+            card.className = "rounded-xl border border-white/10 bg-black/25 p-4";
+            var tl = document.createElement("p");
+            tl.className = "text-xs font-semibold uppercase tracking-wider text-cyan-300/85";
+            tl.textContent = d3.topicLabel || "";
+            card.appendChild(tl);
+            var pq = document.createElement("p");
+            pq.className = "mt-3 text-sm font-medium leading-relaxed text-white/92";
+            pq.textContent = d3.question || "";
+            card.appendChild(pq);
+            var grid = document.createElement("div");
+            grid.className = "mt-5 grid gap-4 sm:grid-cols-2";
+            var forCol = document.createElement("div");
+            forCol.className = "rounded-lg border border-emerald-500/25 bg-emerald-500/5 p-3";
+            var forLabel = document.createElement("p");
+            forLabel.className = "text-[10px] font-semibold uppercase tracking-wider text-emerald-300/90";
+            forLabel.textContent = "Points for";
+            forCol.appendChild(forLabel);
+            var ulf = document.createElement("ul");
+            ulf.className = "mt-2 list-disc space-y-1.5 pl-4 text-xs leading-relaxed text-purple-100/85";
+            (d3.pointsFor || []).forEach(function (t) {
+              var li = document.createElement("li");
+              li.textContent = t;
+              ulf.appendChild(li);
+            });
+            forCol.appendChild(ulf);
+            var againstCol = document.createElement("div");
+            againstCol.className = "rounded-lg border border-rose-500/25 bg-rose-500/5 p-3";
+            var agLabel = document.createElement("p");
+            agLabel.className = "text-[10px] font-semibold uppercase tracking-wider text-rose-300/90";
+            agLabel.textContent = "Points against";
+            againstCol.appendChild(agLabel);
+            var ula = document.createElement("ul");
+            ula.className = "mt-2 list-disc space-y-1.5 pl-4 text-xs leading-relaxed text-purple-100/85";
+            (d3.pointsAgainst || []).forEach(function (t) {
+              var li = document.createElement("li");
+              li.textContent = t;
+              ula.appendChild(li);
+            });
+            againstCol.appendChild(ula);
+            grid.appendChild(forCol);
+            grid.appendChild(againstCol);
+            card.appendChild(grid);
+            p3.appendChild(card);
+          }
+        }
+
+        function bindQuestionCardSelection() {
+          function handle(e) {
+            var card = e.target.closest(".question-card");
+            if (!card) return;
+            var part = card.getAttribute("data-part");
+            if (part !== "p11" && part !== "p12") return;
+            if (recording || analyzeProgressTimer != null) return;
+            document.querySelectorAll('.question-card[data-part="' + part + '"]').forEach(function (c) {
+              c.classList.remove("question-card-selected");
+            });
+            card.classList.add("question-card-selected");
+          }
+          document.getElementById("inject-p11").addEventListener("click", handle);
+          document.getElementById("inject-p12").addEventListener("click", handle);
+        }
+
+        renderSpeakingUI();
 
         const micBtn = document.getElementById("mic-btn");
         const vizWrap = document.getElementById("viz-wrap");
@@ -619,6 +655,8 @@
         let rafId = null;
         let recording = false;
         let analyzeProgressTimer = null;
+
+        bindQuestionCardSelection();
         let activePart = "p11";
         let countdownRemaining = PART_LIMIT_SEC.p11;
         let countdownIntervalId = null;
@@ -701,18 +739,6 @@
             if (analyzeProgressTimer != null) return;
             hideError();
             activateTab(part);
-          });
-        });
-
-        document.querySelectorAll(".question-card").forEach((card) => {
-          card.addEventListener("click", () => {
-            const part = card.getAttribute("data-part");
-            if (!part || (part !== "p11" && part !== "p12")) return;
-            if (recording || analyzeProgressTimer != null) return;
-            document.querySelectorAll('.question-card[data-part="' + part + '"]').forEach((c) => {
-              c.classList.remove("question-card-selected");
-            });
-            card.classList.add("question-card-selected");
           });
         });
 

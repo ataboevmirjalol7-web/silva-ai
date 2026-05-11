@@ -1,7 +1,7 @@
 /**
- * Liva AI — Writing savollar bazasi.
- * task11, task12, part2 — alohida massivlar.
- * Task 1.1 va 1.2: canteenContext + prompt obyektlari.
+ * Liva AI — Writing va Speaking savollar bazasi.
+ * Writing: task11, task12, part2 — alohida massivlar.
+ * Speaking: LIVA_SPEAKING_QUESTIONS (speaking.html, imgUrl ixtiyoriy).
  */
 (function () {
   var CANTEEN_CONTEXT =
@@ -43,5 +43,61 @@
           "Limit: Write 180-200 words.",
       },
     ],
+  };
+
+  /**
+   * Speaking — multi-level savollar (speaking.html).
+   * imgUrl: ixtiyoriy; bo‘lsa, savol matnidan oldin rasm ko‘rsatiladi.
+   */
+  window.LIVA_SPEAKING_QUESTIONS = {
+    part11: [
+      { tag: "Online Shopping", question: "Have you ever bought clothes online?" },
+      { tag: "Colors", question: "What is your favorite color?" },
+      { tag: "Technology", question: "Do you use computers?" },
+    ],
+
+    part12: [
+      {
+        tag: "Image Analysis",
+        question:
+          "What do you see in these pictures? (Comparing office work vs. working from home with a child).",
+        imgUrl: "assets/office-home.jpg",
+      },
+      {
+        tag: "Opinion",
+        question:
+          "Which do you think is better for working in teams: working in an office or from home?",
+      },
+      {
+        tag: "Economics",
+        question: "Do you think companies save money if employees work from home?",
+      },
+    ],
+
+    part2: {
+      imgUrl: "assets/ambition.jpg",
+      title: "Ambition",
+      caption: "Topic · Ambition",
+      bullets: [
+        "Tell me about a time when you pursued an ambitious goal.",
+        "How did this experience change your understanding of ambition?",
+        "What impact does ambition have on people’s lives and society as a whole?",
+      ],
+    },
+
+    part3: {
+      topicLabel: "Topic · Renewable Energy",
+      question: "Should countries invest more in renewable energy sources?",
+      pointsFor: [
+        "Reduces dependence on fossil fuels",
+        "Long-term economic benefits",
+        "Cost-effective and efficient",
+      ],
+      pointsAgainst: [
+        "Expensive initial investment",
+        "Weather-dependent and unreliable",
+        "Challenging to transition without disrupting economies",
+      ],
+    },
   };
 })();
