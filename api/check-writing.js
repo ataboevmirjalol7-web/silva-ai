@@ -40,8 +40,20 @@ function assistantContent(groqData) {
   const c = groqData?.choices?.[0]?.message?.content;
   return typeof c === "string" ? c : null;
 }
-const MIN_LENGTH = 20;
 const MAX_LENGTH = 12000;
+
+/** Client `task` bilan bir xil — so‘z oralig‘i tekshiruvi (script.js). */
+const MIN_WORDS_BY_TASK = {
+  task11: 45,
+  task12: 110,
+  part2: 170,
+};
+
+function countWords(text) {
+  const t = typeof text === "string" ? text.trim() : "";
+  if (!t) return 0;
+  return t.split(/\s+/).length;
+}
 
 const SYSTEM_PROMPT = `You are an expert IELTS Writing examiner. Analyze the candidate's response using official IELTS Writing criteria (adapt Task 1 vs Task 2 weighting when the task is letter/email/report vs essay).
 
@@ -174,10 +186,15 @@ module.exports = async function handler(req, res) {
 
   let essay = "";
   let topic = "";
+  /** @type {string} */
+  let taskKey = "task11";
   try {
     const body = await readJsonBody(req);
     essay = typeof body.essay === "string" ? body.essay : typeof body.text === "string" ? body.text : "";
     topic = typeof body.topic === "string" ? body.topic.trim() : "";
+    if (typeof body.task === "string" && MIN_WORDS_BY_TASK[body.task] !== undefined) {
+      taskKey = body.task;
+    }
   } catch (e) {
     const status = /** @type {{ status?: number }} */ (e).status || 400;
     res.statusCode = status;
@@ -187,10 +204,19 @@ module.exports = async function handler(req, res) {
   }
 
   const trimmed = essay.trim();
-  if (trimmed.length < MIN_LENGTH) {
+  const minWords = MIN_WORDS_BY_TASK[taskKey];
+  const wordCount = countWords(trimmed);
+  if (wordCount < minWords) {
     res.statusCode = 400;
     res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.end(JSON.stringify({ error: `Matn kamida ${MIN_LENGTH} belgi bo‘lishi kerak` }));
+    res.end(
+      JSON.stringify({
+        error: `Matn juda qisqa: kamida ${minWords} so‘z kerak (${taskKey}).`,
+        task: taskKey,
+        wordCount,
+        minWords,
+      })
+    );
     return;
   }
   if (trimmed.length > MAX_LENGTH) {

@@ -262,6 +262,7 @@
                 <span id="word-count" class="text-2xl font-bold tabular-nums text-white">0</span>
                 <span class="text-xs font-medium text-purple-200/55">so‘z</span>
               </p>
+              <p id="min-words-hint" class="mt-1 max-w-[14rem] text-right text-[11px] leading-snug text-purple-300/55"></p>
             </div>
           </div>
 
@@ -274,23 +275,34 @@
             class="min-h-[320px] w-full resize-y rounded-2xl border border-white/12 bg-black/35 px-5 py-4 text-[15px] leading-relaxed text-white placeholder:text-purple-300/35 focus:border-fuchsia-400/50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/25"
           ></textarea>
 
-          <button
-            type="button"
-            id="check-btn"
-            class="group relative mt-6 flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-fuchsia-600 via-violet-600 to-cyan-500 py-4 text-base font-bold tracking-wide text-white shadow-neon transition hover:shadow-neon-hover focus:outline-none focus:ring-2 focus:ring-cyan-400/50 disabled:cursor-not-allowed disabled:opacity-45"
-          >
-            <span
-              class="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 opacity-0 transition group-hover:opacity-100"
-            ></span>
-            <svg class="relative h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.847a4.5 4.5 0 003.09 3.09L15.75 12l-2.847.813a4.5 4.5 0 00-3.09 3.09z"
-              />
-            </svg>
-            <span class="relative">Analyze</span>
-          </button>
+          <div class="relative mt-6" id="check-btn-wrap">
+            <button
+              type="button"
+              id="check-btn"
+              disabled
+              class="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-fuchsia-600 via-violet-600 to-cyan-500 py-4 text-base font-bold tracking-wide text-white shadow-neon transition hover:shadow-neon-hover focus:outline-none focus:ring-2 focus:ring-cyan-400/50 disabled:cursor-not-allowed disabled:!bg-neutral-700 disabled:!from-neutral-700 disabled:!via-neutral-700 disabled:!to-neutral-700 disabled:!text-neutral-400 disabled:!shadow-none disabled:hover:!shadow-none"
+            >
+              <span
+                class="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 opacity-0 transition group-hover:opacity-100 group-disabled:invisible"
+              ></span>
+              <svg class="relative h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.847a4.5 4.5 0 003.09 3.09L15.75 12l-2.847.813a4.5 4.5 0 00-3.09 3.09z"
+                />
+              </svg>
+              <span class="relative">Analyze</span>
+            </button>
+            <button
+              type="button"
+              id="check-btn-blocker"
+              class="absolute inset-0 z-10 cursor-not-allowed rounded-2xl border-0 bg-transparent p-0 focus:outline-none"
+              aria-hidden="true"
+              tabindex="-1"
+              title=""
+            ></button>
+          </div>
         </section>
 
         <!-- O‘ng: tahlil -->

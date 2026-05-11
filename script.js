@@ -3,7 +3,13 @@
  */
 (function () {
   const API_ANALYZE = "/api/check-writing";
-  const MIN_LENGTH = 20;
+
+  /** Joriy topshirig‘ (task tab) bo‘yicha minimal so‘z soni — API bilan bir xil saqlang. */
+  const MIN_WORDS_BY_TASK = {
+    task11: 45,
+    task12: 110,
+    part2: 170,
+  };
 
   function countWords(text) {
     const t = text.trim();
@@ -140,15 +146,51 @@
     const resultCohesion = document.getElementById("result-cohesion");
     const errorEl = document.getElementById("writing-error");
     const yearEl = document.getElementById("year");
+    const checkBtnBlocker = document.getElementById("check-btn-blocker");
+    const minWordsHint = document.getElementById("min-words-hint");
 
     if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+
+    /** @type {boolean} */
+    let analyzeBusy = false;
+
+    function getMinWordsForTask(task) {
+      var m = MIN_WORDS_BY_TASK[task];
+      return typeof m === "number" ? m : MIN_WORDS_BY_TASK.task11;
+    }
+
+    function isEssayValid() {
+      return countWords(essay.value) >= getMinWordsForTask(selectedTask);
+    }
+
+    function syncAnalyzeControls() {
+      var wordsOk = isEssayValid();
+      var canSubmit = wordsOk && !analyzeBusy;
+      checkBtn.disabled = !canSubmit;
+      if (checkBtnBlocker) {
+        checkBtnBlocker.classList.toggle("hidden", wordsOk || analyzeBusy);
+      }
+      if (minWordsHint) {
+        var min = getMinWordsForTask(selectedTask);
+        minWordsHint.textContent =
+          "Minimum · " + min + " so‘z · " + taskTypeLabel(selectedTask);
+      }
+    }
 
     function updateWordCount() {
       if (!wordCountEl) return;
       wordCountEl.textContent = String(countWords(essay.value));
+      syncAnalyzeControls();
     }
     updateWordCount();
     essay.addEventListener("input", updateWordCount);
+
+    if (checkBtnBlocker) {
+      checkBtnBlocker.addEventListener("click", function (e) {
+        e.preventDefault();
+        window.alert("Iltimos, avval vazifani to'liq bajaring.");
+      });
+    }
 
     function setActiveTaskTab(mode) {
       const tabs = [tabTask11, tabTask12, tabPart2].filter(Boolean);
@@ -195,12 +237,14 @@
             "Savollar topilmadi — questions.js yuklanganini tekshiring (LIVA_WRITING_QUESTIONS).";
           topicError.classList.remove("hidden");
         }
+        syncAnalyzeControls();
         return;
       }
 
       var picked = pickRandomItem(list, bank, selectedTask, currentTopic);
       if (picked == null) {
         currentTopic = "";
+        syncAnalyzeControls();
         return;
       }
       var payload = buildTopicPayload(picked, bank, selectedTask);
@@ -230,6 +274,7 @@
 
       setTopicLoadingVisible(false);
       setTopicContentVisible(true);
+      syncAnalyzeControls();
     }
 
     function onTabClick(mode) {
@@ -268,18 +313,18 @@
     }
 
     checkBtn.addEventListener("click", function () {
-      const text = essay.value.trim();
-      if (text.length < MIN_LENGTH) {
+      if (analyzeBusy) return;
+      if (!isEssayValid()) {
+        window.alert("Iltimos, avval vazifani to'liq bajaring.");
         essay.focus();
-        essay.classList.add("ring-2", "ring-amber-400/45");
-        window.setTimeout(function () {
-          essay.classList.remove("ring-2", "ring-amber-400/45");
-        }, 1200);
         return;
       }
 
+      const text = essay.value.trim();
+
       hideError();
-      checkBtn.disabled = true;
+      analyzeBusy = true;
+      syncAnalyzeControls();
       if (emptyState) emptyState.classList.add("hidden");
       if (resultsContent) resultsContent.classList.add("is-hidden");
       setLoading(true);
@@ -287,6 +332,7 @@
       const body = {
         essay: text,
         topic: currentTopic,
+        task: selectedTask,
       };
 
       fetch(API_ANALYZE, {
@@ -331,9 +377,12 @@
           if (emptyState) emptyState.classList.remove("hidden");
         })
         .finally(function () {
-          checkBtn.disabled = false;
+          analyzeBusy = false;
+          syncAnalyzeControls();
         });
     });
+
+    syncAnalyzeControls();
   }
 
   if (document.readyState === "loading") {
