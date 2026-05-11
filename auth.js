@@ -59,26 +59,6 @@ function persistUserToStorage(user) {
   }
 }
 
-function oauthRedirectUrl() {
-  return window.location.origin + "/writing.html";
-}
-
-async function loginWithGoogle() {
-  if (!supabaseClient) return;
-  try {
-    var res = await supabaseClient.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: oauthRedirectUrl(),
-      },
-    });
-    if (res.error) throw res.error;
-  } catch (err) {
-    console.error("Login hatosi:", err && err.message ? err.message : err);
-    alert("Login qilishda muammo yuz berdi.");
-  }
-}
-
 function initAuthSession() {
   if (!supabaseClient) return;
 
@@ -98,13 +78,33 @@ document.addEventListener("DOMContentLoaded", function () {
   initAuthSession();
 });
 
-// auth.js oxiriga qo'shilgan — Google login tugmasi
+// Sahifa to'liq yuklangandan keyin — tugma bosilishini eshitadi va Google login
 document.addEventListener("DOMContentLoaded", () => {
   const loginBtn = document.getElementById("google-login-btn");
+
   if (loginBtn) {
-    loginBtn.addEventListener("click", async () => {
-      console.log("Login tugmasi bosildi...");
-      await loginWithGoogle();
-    });
+    loginBtn.onclick = async (e) => {
+      e.preventDefault();
+      console.log("Login tugmasi bosildi!");
+
+      if (!supabaseClient) {
+        alert("Xatolik yuz berdi: Supabase sozlanmagan (URL yoki anon key).");
+        return;
+      }
+
+      try {
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: window.location.origin + "/writing.html",
+          },
+        });
+        if (error) throw error;
+      } catch (err) {
+        alert("Xatolik yuz berdi: " + (err && err.message ? err.message : String(err)));
+      }
+    };
+  } else {
+    console.error("Tugma topilmadi! ID to'g'ri ekanligini tekshiring.");
   }
 });

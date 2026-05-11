@@ -58,6 +58,45 @@
       .orb {
         animation: pulse-glow 4s ease-in-out infinite;
       }
+      .login-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.65rem;
+        cursor: pointer;
+        border-radius: 1rem;
+        border: 1px solid rgba(34, 211, 238, 0.35);
+        padding: 0.85rem 1.75rem;
+        font-family: inherit;
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(120deg, rgba(192, 38, 211, 0.92), rgba(124, 58, 237, 0.9), rgba(6, 182, 212, 0.85));
+        box-shadow:
+          0 0 42px -12px rgba(168, 85, 247, 0.75),
+          0 0 32px -14px rgba(34, 211, 238, 0.35);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+      .login-button:hover {
+        transform: scale(1.02);
+        border-color: rgba(34, 211, 238, 0.55);
+        box-shadow:
+          0 0 52px -10px rgba(34, 211, 238, 0.5),
+          0 0 40px -8px rgba(168, 85, 247, 0.55);
+      }
+      .login-button:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.55), 0 0 42px -12px rgba(168, 85, 247, 0.6);
+      }
+      .login-button:active {
+        transform: scale(0.99);
+      }
+      .login-button img {
+        width: 1.35rem;
+        height: 1.35rem;
+        object-fit: contain;
+        flex-shrink: 0;
+      }
     </style>
   </head>
   <body class="mesh-bg min-h-screen text-slate-100 antialiased selection:bg-fuchsia-500/30 selection:text-white">
@@ -119,37 +158,8 @@
         <p class="text-center text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
           Hisob
         </p>
-        <button
-          type="button"
-          id="google-login-btn"
-          class="group relative inline-flex items-center gap-3 overflow-hidden rounded-2xl border border-cyan-400/30 bg-gradient-to-r from-fuchsia-600/90 via-violet-600/85 to-cyan-500/80 px-8 py-3.5 text-sm font-bold text-white shadow-[0_0_42px_-12px_rgba(168,85,247,0.75),0_0_32px_-14px_rgba(34,211,238,0.35)] transition hover:scale-[1.02] hover:shadow-[0_0_52px_-10px_rgba(34,211,238,0.5),0_0_40px_-8px_rgba(168,85,247,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60 active:scale-[0.99]"
-        >
-          <span
-            class="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/0 via-white/12 to-white/0 opacity-0 transition group-hover:opacity-100"
-            aria-hidden="true"
-          ></span>
-          <svg class="relative z-10 h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              fill="currentColor"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="currentColor"
-              opacity="0.9"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="currentColor"
-              opacity="0.85"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-            />
-            <path
-              fill="currentColor"
-              opacity="0.95"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-            />
-          </svg>
-          <span class="relative z-10">Google orqali kirish</span>
+        <button type="button" id="google-login-btn" class="login-button">
+          <img src="google-icon.png" alt="" /> Google orqali kirish
         </button>
       </div>
 
