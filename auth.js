@@ -1,37 +1,32 @@
 /**
  * Silva AI — Supabase Auth (Google OAuth).
- * Supabase Dashboard → Settings → API: Project URL va anon public key ni quyiga qo‘ying.
- * Authentication → URL Configuration: “Redirect URLs” ga ushbu saytning to‘liq index.html manzilini qo‘shing (masalan http://127.0.0.1:5500/index.html).
+ * Dashboard → Settings → API: URL va anon key.
+ * Authentication → URL Configuration: Redirect URL (masalan Vercel domeningiz/index.html).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-/** @type {string} */
-const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
-/** @type {string} */
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_PUBLIC_ANON_KEY";
+const SUPABASE_URL = "SIZNING_SUPABASE_URL_SHU_YERGA";
+const SUPABASE_ANON_KEY = "SIZNING_SUPABASE_ANON_KEY_SHU_YERGA";
+
+// Diqqat! Vercel / production da qiymatlar bo‘lmasa — konsolda xabar.
+if (!SUPABASE_URL || SUPABASE_URL === "SIZNING_SUPABASE_URL_SHU_YERGA") {
+  console.error("Supabase URL topilmadi!");
+}
+if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === "SIZNING_SUPABASE_ANON_KEY_SHU_YERGA") {
+  console.error("Supabase Anon Key topilmadi!");
+}
+
+const supabase =
+  SUPABASE_URL &&
+  SUPABASE_URL !== "SIZNING_SUPABASE_URL_SHU_YERGA" &&
+  SUPABASE_ANON_KEY &&
+  SUPABASE_ANON_KEY !== "SIZNING_SUPABASE_ANON_KEY_SHU_YERGA"
+    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { flowType: "pkce", detectSessionInUrl: true },
+      })
+    : null;
 
 const SILVA_USER_KEY = "silva_user";
-
-let supabaseClient = null;
-
-function isConfigured() {
-  return (
-    SUPABASE_URL &&
-    !/YOUR_PROJECT_REF/i.test(SUPABASE_URL) &&
-    SUPABASE_ANON_KEY &&
-    !/^YOUR_SUPABASE_ANON/i.test(SUPABASE_ANON_KEY)
-  );
-}
-
-function getSupabase() {
-  if (!supabaseClient) {
-    if (!isConfigured()) return null;
-    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { flowType: "pkce", detectSessionInUrl: true },
-    });
-  }
-  return supabaseClient;
-}
 
 function getOAuthRedirectUrl() {
   const { origin, pathname } = window.location;
@@ -46,7 +41,6 @@ function isIndexPage() {
   return /index\.html$/i.test(p) || p === "/" || p === "";
 }
 
-/** OAuth / PKCE qaytishi: URL fragment yoki query da sessiya belgilari. */
 function hasAuthCallbackInUrl() {
   const h = window.location.hash;
   const s = window.location.search;
@@ -55,7 +49,6 @@ function hasAuthCallbackInUrl() {
   return false;
 }
 
-/** Foydalanuvchi ism va rasmini localStorage ga yozadi. */
 function persistUserToStorage(user) {
   const m = user.user_metadata || {};
   const id0 = user.identities && user.identities[0];
@@ -90,10 +83,9 @@ function redirectToWritingAfterLogin() {
 }
 
 function initAuthSession() {
-  const sb = getSupabase();
-  if (!sb) return;
+  if (!supabase) return;
 
-  sb.auth.onAuthStateChange((event, session) => {
+  supabase.auth.onAuthStateChange((event, session) => {
     if (!session?.user) return;
     var fromOAuth =
       event === "SIGNED_IN" || (event === "INITIAL_SESSION" && isIndexPage() && hasAuthCallbackInUrl());
@@ -104,14 +96,13 @@ function initAuthSession() {
 }
 
 async function signInWithGoogle() {
-  const sb = getSupabase();
-  if (!sb) {
+  if (!supabase) {
     window.alert(
-      "Supabase hali sozlanmagan.\n\nauth.js ichida SUPABASE_URL va SUPABASE_ANON_KEY ni Supabase Dashboard → Settings → API dan nusxalang."
+      "Supabase hali sozlanmagan.\n\nauth.js ichida SUPABASE_URL va SUPABASE_ANON_KEY ni o‘z qiymatlaringiz bilan almashtiring (Dashboard → Settings → API)."
     );
     return;
   }
-  const { error } = await sb.auth.signInWithOAuth({
+  const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       redirectTo: getOAuthRedirectUrl(),
