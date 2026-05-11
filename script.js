@@ -135,6 +135,9 @@
     let savedEssay12 = "";
     let savedTopic12 = "";
 
+    /** @type {{ title?: string, canteenContext: string, task11: unknown[], task12: unknown[], part2: unknown[] } | null} */
+    let activeWritingTest = null;
+
     const wordCountEl = document.getElementById("word-count");
     const topicLoading = document.getElementById("topic-loading");
     const topicContent = document.getElementById("topic-content");
@@ -285,7 +288,23 @@
         typeof window !== "undefined" && window.SILVA_WRITING_QUESTIONS
           ? window.SILVA_WRITING_QUESTIONS
           : null;
-      const list = bank && bank[selectedTask] ? bank[selectedTask] : null;
+
+      var effectiveBank = bank;
+      if (bank && bank.tests && bank.tests.length > 0) {
+        if (!activeWritingTest) {
+          activeWritingTest = bank.tests[Math.floor(Math.random() * bank.tests.length)];
+        }
+        effectiveBank = {
+          canteenContext: activeWritingTest.canteenContext,
+          task11: activeWritingTest.task11,
+          task12: activeWritingTest.task12,
+          part2: activeWritingTest.part2,
+        };
+      } else {
+        activeWritingTest = null;
+      }
+
+      const list = effectiveBank && effectiveBank[selectedTask] ? effectiveBank[selectedTask] : null;
 
       if (!list || list.length === 0) {
         currentTopic = "";
@@ -305,13 +324,13 @@
           : selectedTask === "task12"
             ? savedTopic12
             : currentTopic || "";
-      var picked = pickRandomItem(list, bank, selectedTask, avoid);
+      var picked = pickRandomItem(list, effectiveBank, selectedTask, avoid);
       if (picked == null) {
         currentTopic = "";
         syncAnalyzeControls();
         return;
       }
-      var payload = buildTopicPayload(picked, bank, selectedTask);
+      var payload = buildTopicPayload(picked, effectiveBank, selectedTask);
       currentTopic = payload.fullText;
       if (topicContextEl) topicContextEl.textContent = payload.contextText;
       if (topicContextWrap) {
@@ -324,6 +343,13 @@
       if (topicText) topicText.textContent = payload.promptText;
       if (topicBadges) {
         topicBadges.innerHTML = "";
+        if (activeWritingTest && activeWritingTest.title) {
+          const testBadge = document.createElement("span");
+          testBadge.className =
+            "rounded-lg border border-violet-400/40 bg-violet-500/15 px-2.5 py-1 text-[11px] font-bold tracking-wide text-violet-100";
+          testBadge.textContent = activeWritingTest.title;
+          topicBadges.appendChild(testBadge);
+        }
         const typeBadge = document.createElement("span");
         typeBadge.className =
           "rounded-lg border border-fuchsia-400/35 bg-fuchsia-500/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-fuchsia-100";
@@ -332,7 +358,7 @@
         const srcBadge = document.createElement("span");
         srcBadge.className =
           "rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-cyan-100";
-        srcBadge.textContent = "Lokal bank";
+        srcBadge.textContent = bank && bank.tests && bank.tests.length ? "Test banki" : "Lokal bank";
         topicBadges.appendChild(srcBadge);
       }
 
@@ -391,7 +417,10 @@
     }
 
     if (refreshTopicBtn) {
-      refreshTopicBtn.addEventListener("click", loadTopic);
+      refreshTopicBtn.addEventListener("click", function () {
+        activeWritingTest = null;
+        loadTopic();
+      });
     }
 
     function showError(msg) {
