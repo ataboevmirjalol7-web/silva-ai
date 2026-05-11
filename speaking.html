@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="uz" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speaking Lab — Liva AI</title>
+    <meta name="description" content="Liva AI: nutq amaliyoti, vizualizatsiya va AI tahlili." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ["Outfit", "system-ui", "sans-serif"] },
+            boxShadow: {
+              glass: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+              neon: "0 0 24px rgba(34, 211, 238, 0.45), 0 0 48px rgba(168, 85, 247, 0.25)",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Outfit", system-ui, sans-serif;
+      }
+      .mesh-bg {
+        background-color: #07040f;
+        background-image:
+          radial-gradient(ellipse 90% 60% at 50% -15%, rgba(147, 51, 234, 0.45), transparent 55%),
+          radial-gradient(ellipse 50% 45% at 100% 30%, rgba(34, 211, 238, 0.08), transparent),
+          radial-gradient(ellipse 45% 40% at 0% 90%, rgba(168, 85, 247, 0.22), transparent);
+      }
+      @keyframes pulse-glow {
+        0%,
+        100% {
+          opacity: 0.35;
+        }
+        50% {
+          opacity: 0.75;
+        }
+      }
+      .orb {
+        animation: pulse-glow 5s ease-in-out infinite;
+      }
+      @keyframes neon-breathe {
+        0%,
+        100% {
+          box-shadow:
+            0 0 20px rgba(34, 211, 238, 0.55),
+            0 0 40px rgba(168, 85, 247, 0.35),
+            0 0 80px rgba(232, 121, 249, 0.2),
+            inset 0 0 30px rgba(255, 255, 255, 0.08);
+        }
+        50% {
+          box-shadow:
+            0 0 32px rgba(34, 211, 238, 0.85),
+            0 0 64px rgba(168, 85, 247, 0.5),
+            0 0 100px rgba(232, 121, 249, 0.35),
+            inset 0 0 40px rgba(255, 255, 255, 0.12);
+        }
+      }
+      @keyframes ring-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .mic-outer-ring {
+        animation: ring-spin 12s linear infinite;
+      }
+      .mic-outer-ring-reverse {
+        animation: ring-spin 18s linear infinite reverse;
+      }
+      .mic-core {
+        animation: neon-breathe 2.4s ease-in-out infinite;
+      }
+      .mic-core.is-recording {
+        animation: neon-breathe 1.1s ease-in-out infinite;
+      }
+      @keyframes analyze-shimmer {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(100%);
+        }
+      }
+      .analyze-bar-fill::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        width: 40%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.25),
+          transparent
+        );
+        animation: analyze-shimmer 1.4s ease-in-out infinite;
+      }
+      @keyframes fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .result-row {
+        animation: fade-up 0.5s ease-out forwards;
+        opacity: 0;
+      }
+      .result-row:nth-child(1) {
+        animation-delay: 0.05s;
+      }
+      .result-row:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      .result-row:nth-child(3) {
+        animation-delay: 0.25s;
+      }
+      #viz-wrap.is-hidden,
+      #analyzing-block.is-hidden,
+      #results-block.is-hidden,
+      #mic-hint-rec.is-hidden {
+        display: none !important;
+      }
+      .metric-fill {
+        transition: width 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+    </style>
+  </head>
+  <body class="mesh-bg min-h-screen antialiased text-white selection:bg-fuchsia-500/35 selection:text-white">
+    <div class="pointer-events-none fixed inset-0 overflow-hidden blur-0">
+      <div class="orb absolute -left-40 top-1/4 h-[28rem] w-[28rem] rounded-full bg-purple-600/25 blur-[120px]"></div>
+      <div
+        class="orb absolute -right-24 bottom-1/4 h-96 w-96 rounded-full bg-cyan-500/12 blur-[100px]"
+        style="animation-delay: 1.2s"
+      ></div>
+      <div
+        class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 256 256%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22 opacity=%220.03%22/%3E%3C/svg%3E')] opacity-40"
+      ></div>
+    </div>
+
+    <div class="relative z-10 mx-auto min-h-screen max-w-3xl px-4 pb-16 pt-8 sm:px-6 lg:px-10">
+      <header class="mb-10 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+        <div>
+          <div
+            class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-4 py-1.5 backdrop-blur-md"
+          >
+            <span class="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_12px_#22d3ee]"></span>
+            <span class="text-xs font-medium tracking-wide text-cyan-200/95">Liva AI · Speaking Lab</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            Nutq
+            <span class="bg-gradient-to-r from-cyan-300 via-fuchsia-200 to-white bg-clip-text text-transparent">
+              amaliyoti
+            </span>
+          </h1>
+          <p class="mt-2 max-w-lg text-sm text-purple-200/70 sm:text-base">
+            Neon mikrofon bilan yozing, jonli to‘lqinlar va tahlil natijalarini ko‘ring.
+          </p>
+        </div>
+        <nav
+          class="flex w-full shrink-0 flex-wrap justify-start gap-2 rounded-2xl border border-white/12 bg-white/[0.06] p-1.5 backdrop-blur-xl sm:w-auto"
+        >
+          <a
+            href="index.html"
+            class="rounded-xl px-4 py-2 text-sm font-medium text-purple-200/55 transition hover:bg-white/[0.06] hover:text-white"
+            >Bosh sahifa</a
+          >
+          <a
+            href="writing.html"
+            class="rounded-xl px-4 py-2 text-sm font-medium text-purple-200/55 transition hover:bg-white/[0.06] hover:text-white"
+            >Writing</a
+          >
+          <span class="rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold text-white">Speaking</span>
+        </nav>
+      </header>
+
+      <main class="flex flex-col items-center">
+        <!-- Audio visualizer -->
+        <div
+          id="viz-wrap"
+          class="is-hidden mb-8 w-full max-w-lg rounded-2xl border border-cyan-500/25 bg-black/40 p-4 backdrop-blur-md"
+          aria-hidden="true"
+        >
+          <p class="mb-2 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300/80">
+            Live audio
+          </p>
+          <canvas id="audio-viz" class="mx-auto block h-28 w-full max-w-md rounded-xl bg-[#0a0614]" width="640" height="112"></canvas>
+        </div>
+
+        <!-- Markaz: mikrofon -->
+        <div class="relative flex flex-col items-center">
+          <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div
+              class="mic-outer-ring h-52 w-52 rounded-full border border-dashed border-cyan-400/20 sm:h-56 sm:w-56"
+            ></div>
+          </div>
+          <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div
+              class="mic-outer-ring-reverse h-44 w-44 rounded-full border border-fuchsia-400/15 sm:h-48 sm:w-48"
+            ></div>
+          </div>
+
+          <button
+            type="button"
+            id="mic-btn"
+            class="mic-core group relative flex h-36 w-36 items-center justify-center rounded-full border-2 border-white/20 bg-gradient-to-br from-cyan-500/90 via-fuchsia-600/85 to-purple-700/95 transition hover:scale-[1.03] hover:border-cyan-300/40 focus:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/45 active:scale-[0.98] sm:h-40 sm:w-40"
+            aria-pressed="false"
+            aria-label="Ovozni yozishni boshlash yoki to‘xtatish"
+          >
+            <span class="absolute inset-2 rounded-full bg-black/25 backdrop-blur-[2px]"></span>
+            <svg
+              class="relative z-10 h-14 w-14 text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.5)] transition group-hover:scale-105 sm:h-16 sm:w-16"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.56 5.91 6.16V21c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.6 5.42-3.15 5.91-6.16.1-.6-.39-1.14-1-1.14z"
+              />
+            </svg>
+          </button>
+
+          <p id="mic-hint-idle" class="mt-6 max-w-xs text-center text-sm text-purple-200/65">
+            Boshlash uchun tugmani bosing. Yana bir marta bosib yozuvni to‘xtating.
+          </p>
+          <p id="mic-hint-rec" class="is-hidden mt-6 max-w-xs text-center text-sm font-medium text-cyan-300/90">
+            <span class="inline-block h-2 w-2 animate-pulse rounded-full bg-red-400 align-middle shadow-[0_0_10px_#f87171]"></span>
+            Yozilmoqda… tugmani bosib to‘xtating
+          </p>
+        </div>
+
+        <!-- Tahlil -->
+        <div
+          id="analyzing-block"
+          class="is-hidden mt-10 w-full max-w-lg rounded-2xl border border-fuchsia-500/30 bg-white/[0.06] p-6 shadow-glass backdrop-blur-xl"
+          role="status"
+          aria-live="polite"
+        >
+          <div class="flex items-center gap-3">
+            <span
+              class="inline-block h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-fuchsia-400/30 border-t-fuchsia-400"
+            ></span>
+            <p class="text-sm font-semibold text-white sm:text-base">Analyzing pronunciation and fluency…</p>
+          </div>
+          <div class="mt-4 h-2.5 overflow-hidden rounded-full border border-white/10 bg-black/40">
+            <div
+              id="analyze-bar"
+              class="analyze-bar-fill relative h-full w-0 rounded-full bg-gradient-to-r from-cyan-500 via-fuchsia-500 to-purple-500"
+            ></div>
+          </div>
+          <p class="mt-2 text-xs text-purple-200/55">AI modeli audio va ritmni baholamoqda.</p>
+        </div>
+
+        <!-- Natijalar -->
+        <section
+          id="results-block"
+          class="is-hidden mt-10 w-full max-w-lg rounded-2xl border border-white/15 bg-white/[0.06] p-6 shadow-glass backdrop-blur-2xl sm:p-8"
+          aria-label="Tahlil natijalari"
+        >
+          <h2 class="text-lg font-bold text-white sm:text-xl">Natijalar</h2>
+          <p class="mt-1 text-xs text-purple-200/55">Namuna baholari (UI demo). Keyinchalik API bilan almashtiriladi.</p>
+
+          <div class="mt-6 space-y-5">
+            <div class="result-row">
+              <div class="mb-1.5 flex justify-between text-sm">
+                <span class="font-medium text-cyan-100/95">Pronunciation</span>
+                <span id="score-pron" class="tabular-nums text-purple-200/80">0%</span>
+              </div>
+              <div class="h-2.5 overflow-hidden rounded-full border border-white/10 bg-black/35">
+                <div
+                  id="bar-pron"
+                  class="metric-fill h-full w-0 rounded-full bg-gradient-to-r from-cyan-500 to-cyan-300"
+                ></div>
+              </div>
+            </div>
+            <div class="result-row">
+              <div class="mb-1.5 flex justify-between text-sm">
+                <span class="font-medium text-fuchsia-100/95">Intonation</span>
+                <span id="score-into" class="tabular-nums text-purple-200/80">0%</span>
+              </div>
+              <div class="h-2.5 overflow-hidden rounded-full border border-white/10 bg-black/35">
+                <div
+                  id="bar-into"
+                  class="metric-fill h-full w-0 rounded-full bg-gradient-to-r from-fuchsia-600 to-fuchsia-400"
+                ></div>
+              </div>
+            </div>
+            <div class="result-row">
+              <div class="mb-1.5 flex justify-between text-sm">
+                <span class="font-medium text-violet-100/95">Vocabulary Diversity</span>
+                <span id="score-vocab" class="tabular-nums text-purple-200/80">0%</span>
+              </div>
+              <div class="h-2.5 overflow-hidden rounded-full border border-white/10 bg-black/35">
+                <div
+                  id="bar-vocab"
+                  class="metric-fill h-full w-0 rounded-full bg-gradient-to-r from-violet-600 to-purple-400"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            id="reset-btn"
+            class="mt-8 w-full rounded-xl border border-white/15 bg-white/[0.08] py-3 text-sm font-semibold text-white transition hover:bg-white/[0.12] focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/50"
+          >
+            Qayta yozish
+          </button>
+        </section>
+
+        <p id="error-msg" class="mt-6 hidden max-w-md text-center text-sm text-red-300/90"></p>
+      </main>
+
+      <footer class="mt-16 text-center text-xs text-purple-300/40">
+        © <span id="year"></span> Liva AI · Speaking
+      </footer>
+    </div>
+
+    <script>
+      (function () {
+        document.getElementById("year").textContent = new Date().getFullYear();
+
+        const micBtn = document.getElementById("mic-btn");
+        const vizWrap = document.getElementById("viz-wrap");
+        const canvas = document.getElementById("audio-viz");
+        const ctx = canvas.getContext("2d");
+        const hintIdle = document.getElementById("mic-hint-idle");
+        const hintRec = document.getElementById("mic-hint-rec");
+        const analyzingBlock = document.getElementById("analyzing-block");
+        const analyzeBar = document.getElementById("analyze-bar");
+        const resultsBlock = document.getElementById("results-block");
+        const errorMsg = document.getElementById("error-msg");
+        const resetBtn = document.getElementById("reset-btn");
+        const barPron = document.getElementById("bar-pron");
+        const barInto = document.getElementById("bar-into");
+        const barVocab = document.getElementById("bar-vocab");
+        const scorePron = document.getElementById("score-pron");
+        const scoreInto = document.getElementById("score-into");
+        const scoreVocab = document.getElementById("score-vocab");
+
+        let audioCtx = null;
+        let analyser = null;
+        let sourceNode = null;
+        let mediaStream = null;
+        let mediaRecorder = null;
+        let chunks = [];
+        let rafId = null;
+        let recording = false;
+        let analyzeProgressTimer = null;
+
+        function showError(text) {
+          errorMsg.textContent = text;
+          errorMsg.classList.remove("hidden");
+        }
+        function hideError() {
+          errorMsg.classList.add("hidden");
+        }
+
+        function resizeCanvas() {
+          const dpr = Math.min(window.devicePixelRatio || 1, 2);
+          const rect = canvas.getBoundingClientRect();
+          canvas.width = Math.floor(rect.width * dpr);
+          canvas.height = Math.floor(rect.height * dpr);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function drawVisualizer() {
+          if (!analyser) return;
+          const w = canvas.getBoundingClientRect().width;
+          const h = canvas.getBoundingClientRect().height;
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+          analyser.getByteFrequencyData(dataArray);
+
+          ctx.fillStyle = "#0a0614";
+          ctx.fillRect(0, 0, w, h);
+
+          const bars = 48;
+          const step = Math.floor(bufferLength / bars);
+          const barWidth = (w / bars) * 0.65;
+          const gap = (w / bars) * 0.35;
+
+          for (let i = 0; i < bars; i++) {
+            let sum = 0;
+            for (let j = 0; j < step; j++) sum += dataArray[i * step + j] || 0;
+            const avg = sum / step;
+            const bh = Math.max(4, (avg / 255) * h * 0.92);
+            const x = i * (barWidth + gap) + gap / 2;
+            const y = h - bh;
+            const g = ctx.createLinearGradient(0, y, 0, h);
+            g.addColorStop(0, "rgba(34, 211, 238, 0.95)");
+            g.addColorStop(0.5, "rgba(232, 121, 249, 0.85)");
+            g.addColorStop(1, "rgba(168, 85, 247, 0.5)");
+            ctx.fillStyle = g;
+            ctx.fillRect(x, y, barWidth, bh);
+          }
+
+          rafId = requestAnimationFrame(drawVisualizer);
+        }
+
+        function stopVisualizer() {
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = null;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function teardownAudio() {
+          stopVisualizer();
+          if (sourceNode) {
+            try {
+              sourceNode.disconnect();
+            } catch (_) {}
+            sourceNode = null;
+          }
+          if (mediaStream) {
+            mediaStream.getTracks().forEach((t) => t.stop());
+            mediaStream = null;
+          }
+          if (audioCtx && audioCtx.state !== "closed") {
+            audioCtx.close().catch(() => {});
+            audioCtx = null;
+          }
+          analyser = null;
+        }
+
+        async function startRecording() {
+          hideError();
+          chunks = [];
+          mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          analyser.smoothingTimeConstant = 0.78;
+          sourceNode = audioCtx.createMediaStreamSource(mediaStream);
+          sourceNode.connect(analyser);
+
+          const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+            ? "audio/webm;codecs=opus"
+            : undefined;
+          mediaRecorder = new MediaRecorder(mediaStream, mime ? { mimeType: mime } : undefined);
+          mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) chunks.push(e.data);
+          };
+          mediaRecorder.start(100);
+
+          recording = true;
+          micBtn.setAttribute("aria-pressed", "true");
+          micBtn.classList.add("is-recording");
+          hintIdle.classList.add("is-hidden");
+          hintRec.classList.remove("is-hidden");
+          vizWrap.classList.remove("is-hidden");
+          vizWrap.setAttribute("aria-hidden", "false");
+          resizeCanvas();
+          window.addEventListener("resize", resizeCanvas);
+          drawVisualizer();
+        }
+
+        function stopRecording() {
+          return new Promise((resolve) => {
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+              resolve(null);
+              return;
+            }
+            mediaRecorder.onstop = () => {
+              const blob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
+              resolve(blob);
+            };
+            mediaRecorder.stop();
+          });
+        }
+
+        function runAnalyzeProgress(durationMs, onDone) {
+          if (analyzeProgressTimer) clearTimeout(analyzeProgressTimer);
+          analyzeBar.style.transition = "none";
+          analyzeBar.style.width = "0%";
+          void analyzeBar.offsetWidth;
+          analyzeBar.style.transition = "width " + durationMs + "ms cubic-bezier(0.4, 0, 0.2, 1)";
+          analyzeBar.style.width = "100%";
+          analyzeProgressTimer = window.setTimeout(() => {
+            analyzeProgressTimer = null;
+            onDone();
+          }, durationMs);
+        }
+
+        function hashScoresFromBlob(blob) {
+          const seed = (blob && blob.size) || 1;
+          const base = 62 + ((seed * 9301 + 49297) % 233280) / 2332.8;
+          const pron = Math.min(95, Math.round(base + (seed % 7)));
+          const into = Math.min(94, Math.round(base - 5 + ((seed >> 3) % 11)));
+          const vocab = Math.min(93, Math.round(base - 8 + ((seed >> 7) % 13)));
+          return {
+            pron: Math.max(48, pron),
+            into: Math.max(45, into),
+            vocab: Math.max(42, vocab),
+          };
+        }
+
+        function showResults(scores) {
+          resultsBlock.classList.remove("is-hidden");
+          barPron.style.width = "0%";
+          barInto.style.width = "0%";
+          barVocab.style.width = "0%";
+          scorePron.textContent = "0%";
+          scoreInto.textContent = "0%";
+          scoreVocab.textContent = "0%";
+          requestAnimationFrame(() => {
+            barPron.style.width = scores.pron + "%";
+            barInto.style.width = scores.into + "%";
+            barVocab.style.width = scores.vocab + "%";
+            scorePron.textContent = scores.pron + "%";
+            scoreInto.textContent = scores.into + "%";
+            scoreVocab.textContent = scores.vocab + "%";
+          });
+        }
+
+        micBtn.addEventListener("click", async () => {
+          if (analyzeProgressTimer != null) return;
+
+          if (!recording) {
+            try {
+              await startRecording();
+            } catch (e) {
+              showError("Mikrofonga ruxsat berilmadi yoki brauzer qo‘llab-quvvatlamaydi.");
+              teardownAudio();
+              recording = false;
+              micBtn.setAttribute("aria-pressed", "false");
+              micBtn.classList.remove("is-recording");
+              hintIdle.classList.remove("is-hidden");
+              hintRec.classList.add("is-hidden");
+              vizWrap.classList.add("is-hidden");
+            }
+            return;
+          }
+
+          const blob = await stopRecording();
+          recording = false;
+          micBtn.setAttribute("aria-pressed", "false");
+          micBtn.classList.remove("is-recording");
+          hintIdle.classList.remove("is-hidden");
+          hintRec.classList.add("is-hidden");
+          window.removeEventListener("resize", resizeCanvas);
+          vizWrap.classList.add("is-hidden");
+          vizWrap.setAttribute("aria-hidden", "true");
+          teardownAudio();
+
+          analyzingBlock.classList.remove("is-hidden");
+          resultsBlock.classList.add("is-hidden");
+          micBtn.disabled = true;
+          micBtn.classList.add("opacity-45", "pointer-events-none");
+
+          const duration = 2800;
+          runAnalyzeProgress(duration, () => {
+            analyzingBlock.classList.add("is-hidden");
+            analyzeBar.style.width = "0%";
+            const scores = hashScoresFromBlob(blob);
+            showResults(scores);
+            micBtn.disabled = false;
+            micBtn.classList.remove("opacity-45", "pointer-events-none");
+          });
+        });
+
+        resetBtn.addEventListener("click", () => {
+          if (analyzeProgressTimer != null) clearTimeout(analyzeProgressTimer);
+          analyzeProgressTimer = null;
+          micBtn.disabled = false;
+          micBtn.classList.remove("opacity-45", "pointer-events-none");
+          analyzingBlock.classList.add("is-hidden");
+          resultsBlock.classList.add("is-hidden");
+          analyzeBar.style.transition = "none";
+          analyzeBar.style.width = "0%";
+          teardownAudio();
+          recording = false;
+          micBtn.setAttribute("aria-pressed", "false");
+          micBtn.classList.remove("is-recording");
+          hintIdle.classList.remove("is-hidden");
+          hintRec.classList.add("is-hidden");
+          vizWrap.classList.add("is-hidden");
+          hideError();
+        });
+      })();
+    </script>
+  </body>
+</html>
