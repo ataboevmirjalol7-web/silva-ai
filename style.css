@@ -1,0 +1,48 @@
+/* --- Mobil moslashuv (Responsive Design) --- */
+@media (max-width: 768px) {
+  .main-title {
+    font-size: 2.8rem;
+  }
+
+  .hero-section {
+    padding: 40px 15px;
+  }
+
+  .academic-goal {
+    width: 95%;
+    padding: 15px;
+    margin: 0 auto 25px auto;
+    text-align: center;
+    border-left: none;
+    border-top: 4px solid #2575fc;
+  }
+
+  .academic-goal p {
+    font-size: 1rem;
+  }
+
+  .founder-name {
+    font-size: 1rem;
+  }
+
+  /* index.html da tugma klassi: login-button */
+  .login-button,
+  .custom-google-btn {
+    width: 100%;
+    justify-content: center;
+    max-width: 300px;
+    box-sizing: border-box;
+  }
+
+  .services-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .service-card {
+    width: 100%;
+    max-width: 350px;
+  }
+}
